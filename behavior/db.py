@@ -49,6 +49,8 @@ def get_django_session_table():
     Probably should rewrite this to use the django ORM instead of
     sqlalchemy.
     
+    datetimes are returned in NewYork
+    
     Returns: DataFrame, with these columns
         mouse, stimulus_set, scheduler, date_time_start
     """
@@ -91,6 +93,11 @@ def get_django_session_table():
     # Replace Null in stimulus_set and scheduler with ''
     session_table['stimulus_set'].fillna('', inplace=True)
     session_table['scheduler'].fillna('', inplace=True)
+    
+    # Add timezone
+    tz = pytz.timezone('America/New_York')
+    session_table['date_time_start'] = session_table['date_time_start'].apply(
+        lambda ts: ts.tz_convert(tz))
     
     return session_table
 
