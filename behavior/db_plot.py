@@ -3,7 +3,7 @@
 import numpy as np
 import pandas
 import ArduFSM
-import BeWatch
+import MCwatch
 import my
 import datetime
 from ArduFSM import TrialMatrix, TrialSpeak, mainloop
@@ -29,7 +29,7 @@ def plot_by_training_stage():
     Returns: list of Figure
     """
     # Get perf data partitioned by training stage
-    session_table, change_table = BeWatch.db.calculate_perf_by_training_stage()
+    session_table, change_table = MCwatch.behavior.db.calculate_perf_by_training_stage()
 
     # Partition plot by mouse
     n_mouse_per_figure = 4
@@ -84,7 +84,7 @@ def plot_by_training_stage_one_mouse(msessions, mchanges, ax=None,
     """Plot single mouse's performance split by training stage.
     
     msessions : subset of session_table for a single mouse from 
-        BeWatch.db.calculate_perf_by_training_stage
+        MCwatch.behavior.db.calculate_perf_by_training_stage
     mchanges : same but for change_table
     """
     if ax is None:
@@ -161,7 +161,7 @@ def plot_weights(delta_days=20):
         f - Figure, one axis per cohort
         piv - pivoted data with weight and date
     """
-    cohorts = BeWatch.db.getstarted()['cohorts']
+    cohorts = MCwatch.behavior.db.getstarted()['cohorts']
     f, axa = plt.subplots(len(cohorts), 1, figsize=(7, 3.75 * len(cohorts)))
 
     # Get training data
@@ -200,24 +200,24 @@ def status_check(delta_days=30):
     """Run the daily status check"""
     # For right now this same function checks for missing sessions, etc,
     # but this should be broken out
-    cohorts = BeWatch.db.getstarted()['cohorts']
+    cohorts = MCwatch.behavior.db.getstarted()['cohorts']
     for cohort in cohorts:
         plot_pivoted_performances(keep_mice=cohort, delta_days=delta_days)
     
-    BeWatch.db_plot.display_perf_by_servo_from_day()
-    BeWatch.db_plot.display_perf_by_rig()
+    MCwatch.behavior.db_plot.display_perf_by_servo_from_day()
+    MCwatch.behavior.db_plot.display_perf_by_rig()
     plt.show()
 
 
 def plot_logfile_check(logfile, state_names='original'):
     # Run the check
-    check_res = BeWatch.db.check_logfile(logfile)
+    check_res = MCwatch.behavior.db.check_logfile(logfile)
 
     # State numbering
     if state_names == 'original':
-        state_num2names = BeWatch.db.get_state_num2names()  
+        state_num2names = MCwatch.behavior.db.get_state_num2names()  
     elif state_names == 'debug':
-        state_num2names = BeWatch.db.get_state_num2names_dbg()  
+        state_num2names = MCwatch.behavior.db.get_state_num2names_dbg()  
     else:
         raise ValueError("unknown state names: %r" % state_names)
    
@@ -306,7 +306,7 @@ def plot_pivoted_performances(start_date=None, delta_days=15, piv=None,
     
     # Get pivoted unless provided
     if piv is None:
-        piv = BeWatch.db.calculate_pivoted_performances(start_date=start_date,
+        piv = MCwatch.behavior.db.calculate_pivoted_performances(start_date=start_date,
             drop_perfect=drop_perfect, stop_date=stop_date)
     
     # plot each
@@ -422,7 +422,7 @@ def plot_pivoted_performances(start_date=None, delta_days=15, piv=None,
 
 def display_session_plots_from_day(date=None):
     """Display all session plots from date, or most recent date"""
-    bdf = BeWatch.db.get_behavior_df()
+    bdf = MCwatch.behavior.db.get_behavior_df()
     bdf_dates = bdf['dt_end'].apply(lambda dt: dt.date())
     
     # Set to most recent date in database if None
@@ -450,8 +450,8 @@ def display_overlays_by_rig_from_day(date=None, rigs=('B1', 'B2', 'B3', 'B4'),
     this is to run make_overlays_from_all_fits.
     """
     # Load data
-    sbvdf = BeWatch.db.get_synced_behavior_and_video_df()
-    msdf = BeWatch.db.get_manual_sync_df()
+    sbvdf = MCwatch.behavior.db.get_synced_behavior_and_video_df()
+    msdf = MCwatch.behavior.db.get_manual_sync_df()
     sbvdf_dates = sbvdf['dt_end'].apply(lambda dt: dt.date())
     
     # Set to most recent date in database if None
@@ -486,7 +486,7 @@ def display_overlays_by_rig_from_day(date=None, rigs=('B1', 'B2', 'B3', 'B4'),
         # Try to construct the meaned frames
         if session in msdf.index:
             # Syncing information available
-            BeWatch.overlays.make_overlays_from_fits(session, 
+            MCwatch.behavior.overlays.make_overlays_from_fits(session, 
                 verbose=True, ax=ax, ax_meth=overlay_meth)
         else:
             # No syncing information
@@ -498,7 +498,7 @@ def display_overlays_by_rig_from_day(date=None, rigs=('B1', 'B2', 'B3', 'B4'),
 def display_perf_by_servo_from_day(date=None):
     """Plot perf vs servo position from all sessions from date"""
     # Get bdf and its dates
-    bdf = BeWatch.db.get_behavior_df()
+    bdf = MCwatch.behavior.db.get_behavior_df()
     bdf_dates = bdf['dt_end'].apply(lambda dt: dt.date())
     
     # Set to most recent date in database if None
@@ -533,7 +533,7 @@ def display_perf_by_servo(session=None, tm=None, ax=None, mean_meth='lr_pool'):
     """
     # Get trial matrix
     if session is not None:
-        tm = BeWatch.db.get_trial_matrix(session)
+        tm = MCwatch.behavior.db.get_trial_matrix(session)
     
     # Ax
     if ax is None:
@@ -585,7 +585,7 @@ def display_perf_by_rig(piv=None, drop_mice=('KF28', 'KM14', 'KF19')):
     """Display performance by rig over days"""
     # Get pivoted unless provided
     if piv is None:
-        piv = BeWatch.db.calculate_pivoted_perf_by_rig(drop_mice=drop_mice)
+        piv = MCwatch.behavior.db.calculate_pivoted_perf_by_rig(drop_mice=drop_mice)
     
     # plot each
     to_plot_f_l = [
@@ -665,7 +665,7 @@ def display_session_plot(session, stimulus_set=None):
     is not saved in the logfile.
     """
     # Find the filename
-    bdf = BeWatch.db.get_behavior_df()
+    bdf = MCwatch.behavior.db.get_behavior_df()
     rows = bdf[bdf.session == session]
     if len(rows) != 1:
         raise ValueError("cannot find unique session for %s" % session)
@@ -700,7 +700,7 @@ def display_session_plot(session, stimulus_set=None):
         break
     
     # Set xlim to include entire session
-    trial_matrix = BeWatch.db.get_trial_matrix(session)
+    trial_matrix = MCwatch.behavior.db.get_trial_matrix(session)
     plotter.graphics_handles['ax'].set_xlim((0, len(trial_matrix)))
     
     # label

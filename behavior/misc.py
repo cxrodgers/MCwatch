@@ -1,4 +1,4 @@
-""""Module for miscellaneous BeWatch stuff
+""""Module for miscellaneous behavior stuff
 
 For example, stuff like extracting lick times or choice times.
 TrialSpeak shouldn't depend on stuff like that.
@@ -32,14 +32,14 @@ TrialSpeak shouldn't depend on stuff like that.
     rwin_close_times_by_trial = rwin_close_times.groupby(
         'trial').first()['time'] / 1000.
 """
-import BeWatch
+import MCwatch
 import ArduFSM
 import numpy as np
 
 def get_choice_times(behavior_filename, verbose=False):
     """Calculates the choice time for each trial in the logfile"""
     # Find the state number for response window
-    state_num2names = BeWatch.db.get_state_num2names()    
+    state_num2names = MCwatch.behavior.db.get_state_num2names()    
     resp_win_num = dict([(v, k) for k, v in state_num2names.items()])[
         'RESPONSE_WINDOW']
     

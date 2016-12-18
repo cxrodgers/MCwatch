@@ -8,7 +8,7 @@ import my
 from ArduFSM import TrialMatrix, TrialSpeak, mainloop
 import matplotlib.pyplot as plt
 import my.plot
-import BeWatch
+import MCwatch
 
 
 def mean_frames_by_choice(trials_info, trialnum2frame):
@@ -124,8 +124,8 @@ def make_overlays_from_fits_for_day(overwrite_frames=False, savefig=True,
     Then calls make_overlays_from_fits on each session
     """
     # Load data
-    sbvdf = BeWatch.db.get_synced_behavior_and_video_df()
-    msdf = BeWatch.db.get_manual_sync_df()
+    sbvdf = MCwatch.behavior.db.get_synced_behavior_and_video_df()
+    msdf = MCwatch.behavior.db.get_manual_sync_df()
     sbvdf_dates = sbvdf['dt_end'].apply(lambda dt: dt.date())
 
     # Set to most recent date in database if None
@@ -161,9 +161,9 @@ def make_overlays_from_fits(session, overwrite_frames=False, savefig=True,
         savefig only applies in this case
     """
     # Load data
-    sbvdf = BeWatch.db.get_synced_behavior_and_video_df()
-    msdf = BeWatch.db.get_manual_sync_df()
-    PATHS = BeWatch.db.get_paths()
+    sbvdf = MCwatch.behavior.db.get_synced_behavior_and_video_df()
+    msdf = MCwatch.behavior.db.get_manual_sync_df()
+    PATHS = MCwatch.behavior.db.get_paths()
 
     # Choose the savename and skip if it exists
     if ax is None and savefig:
@@ -202,7 +202,7 @@ def make_overlays_from_fits(session, overwrite_frames=False, savefig=True,
         my.misc.pickle_dump(trial_number2frame, cache_filename)
 
     # Keep only those trials that we found images for
-    trial_matrix = BeWatch.db.get_trial_matrix(session)
+    trial_matrix = MCwatch.behavior.db.get_trial_matrix(session)
     trial_matrix = trial_matrix.ix[sorted(trial_number2frame.keys())]
 
     # Split on side, servo_pos, stim_number

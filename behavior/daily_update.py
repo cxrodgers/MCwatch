@@ -5,7 +5,7 @@ import glob
 import pandas
 import ArduFSM
 import my
-import BeWatch
+import MCwatch
 from ArduFSM import TrialMatrix, TrialSpeak, mainloop
 
 
@@ -14,7 +14,7 @@ def daily_update():
     
     This should be run on marvin locale.
     """
-    if BeWatch.db.get_locale() != 'marvin':
+    if MCwatch.behavior.db.get_locale() != 'marvin':
         raise ValueError("this must be run on marvin")
     
     daily_update_behavior()
@@ -26,11 +26,11 @@ def daily_update():
 def daily_update_behavior():
     """Update behavior database"""
     # load the current database
-    current_bdf = BeWatch.db.get_behavior_df()
+    current_bdf = MCwatch.behavior.db.get_behavior_df()
 
     # get new records
-    PATHS = BeWatch.db.get_paths()
-    newly_added_bdf = BeWatch.db.search_for_behavior_files(
+    PATHS = MCwatch.behavior.db.get_paths()
+    newly_added_bdf = MCwatch.behavior.db.search_for_behavior_files(
         behavior_dir=PATHS['behavior_dir'],
         clean=True)
     
@@ -55,7 +55,7 @@ def daily_update_behavior():
     new_bdf.to_csv(filename, index=False)
     
     # Test the reading/writing is working
-    bdf_reloaded = BeWatch.db.get_behavior_df()
+    bdf_reloaded = MCwatch.behavior.db.get_behavior_df()
     if not (new_bdf_copy == bdf_reloaded).all().all():
         raise ValueError("read/write error in behavior database")
     
@@ -66,7 +66,7 @@ def daily_update_video():
     Extracts timing information from them
     Updates video.csv on disk.
     """
-    PATHS = BeWatch.db.get_paths()
+    PATHS = MCwatch.behavior.db.get_paths()
     # find video files
     mp4_files = glob.glob(os.path.join(PATHS['video_dir'], '*.mp4'))
     mkv_files = glob.glob(os.path.join(PATHS['video_dir'], '*.mkv'))
@@ -74,10 +74,10 @@ def daily_update_video():
     
     # Load existing video file dataframe and use as a cache
     # This way we don't have to reprocess videos we already know about
-    vdf = BeWatch.db.get_video_df()    
+    vdf = MCwatch.behavior.db.get_video_df()    
     
     # Parse into df
-    video_files_df = BeWatch.db.parse_video_filenames(
+    video_files_df = MCwatch.behavior.db.parse_video_filenames(
         video_files, verbose=True,
         cached_video_files_df=vdf)
 
@@ -95,7 +95,7 @@ def daily_update_video():
     
     # Test the reading/writing is working
     # Although if it failed, it's too late
-    vdf = BeWatch.db.get_video_df()
+    vdf = MCwatch.behavior.db.get_video_df()
     if not (video_files_df_local == vdf).all().all():
         raise ValueError("read/write error in video database")    
 
@@ -104,16 +104,16 @@ def daily_update_overlap_behavior_and_video():
     
     Should run daily_update_behavior and daily_update_video first
     """
-    PATHS = BeWatch.db.get_paths()
+    PATHS = MCwatch.behavior.db.get_paths()
     # Load the databases
-    behavior_files_df = BeWatch.db.get_behavior_df()
-    video_files_df = BeWatch.db.get_video_df()
+    behavior_files_df = MCwatch.behavior.db.get_behavior_df()
+    video_files_df = MCwatch.behavior.db.get_video_df()
 
     # Load the cached sbvdf so we don't waste time resyncing
-    sbvdf = BeWatch.db.get_synced_behavior_and_video_df()
+    sbvdf = MCwatch.behavior.db.get_synced_behavior_and_video_df()
 
     # Find the best overlap
-    new_sbvdf = BeWatch.db.find_best_overlap_video(
+    new_sbvdf = MCwatch.behavior.db.find_best_overlap_video(
         behavior_files_df, video_files_df,
         cached_sbvdf=sbvdf,
         always_prefer_mkv=True)
@@ -133,9 +133,9 @@ def daily_update_trial_matrix(start_date=None, verbose=False):
     
     TODO: use cache
     """
-    PATHS = BeWatch.db.get_paths()
+    PATHS = MCwatch.behavior.db.get_paths()
     # Get
-    behavior_files_df = BeWatch.db.get_behavior_df()
+    behavior_files_df = MCwatch.behavior.db.get_behavior_df()
     
     # Filter by those after start date
     if start_date is not None:
@@ -172,9 +172,9 @@ def daily_update_perf_metrics(start_date=None, verbose=False):
     To add: percentage of forced trials. EV of various biases instead
     of FEV
     """
-    PATHS = BeWatch.db.get_paths()
+    PATHS = MCwatch.behavior.db.get_paths()
     # Get
-    behavior_files_df = BeWatch.db.get_behavior_df()
+    behavior_files_df = MCwatch.behavior.db.get_behavior_df()
 
     # Filter by those after start date
     if start_date is not None:
@@ -182,7 +182,7 @@ def daily_update_perf_metrics(start_date=None, verbose=False):
             behavior_files_df.dt_start >= start_date]
 
     # Load what we've already calculated
-    pmdf = BeWatch.db.get_perf_metrics()
+    pmdf = MCwatch.behavior.db.get_perf_metrics()
 
     # Calculate any that need it
     new_pmdf_rows_l = []
@@ -199,8 +199,8 @@ def daily_update_perf_metrics(start_date=None, verbose=False):
             continue
         
         # Otherwise run
-        trial_matrix = BeWatch.db.get_trial_matrix(session)
-        metrics = BeWatch.db.calculate_perf_metrics(trial_matrix)
+        trial_matrix = MCwatch.behavior.db.get_trial_matrix(session)
+        metrics = MCwatch.behavior.db.calculate_perf_metrics(trial_matrix)
         
         # Store
         metrics['session'] = session
