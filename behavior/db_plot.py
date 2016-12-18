@@ -20,7 +20,9 @@ def plot_by_training_stage():
     * Scheduler change
     * Stimulus change
     * Whisker trim
-    * (TODO) rig change
+    
+    Note that lick training days will show up as partitions, but
+    there is no performance data.
     
     Requires:
     * Internet access to google doc of whisker trims
@@ -29,7 +31,8 @@ def plot_by_training_stage():
     Returns: list of Figure
     """
     # Get perf data partitioned by training stage
-    session_table, change_table = MCwatch.behavior.db.calculate_perf_by_training_stage()
+    session_table, change_table = \
+        MCwatch.behavior.db.calculate_perf_by_training_stage()
 
     # Partition plot by mouse
     n_mouse_per_figure = 4
@@ -52,7 +55,6 @@ def plot_by_training_stage():
 
         ax = axa[axnum]
         axnum += 1
-        
         plot_by_training_stage_one_mouse(msessions, mchanges, ax=ax)
         ax.set_title(mouse)
 
