@@ -2,6 +2,7 @@
 
 """
 import os
+import datetime
 import numpy as np
 import glob
 import re
@@ -15,6 +16,9 @@ from ArduFSM import TrialMatrix, TrialSpeak, mainloop
 import socket
 import json
 
+# For django ORM
+import runner.models
+
 # for get_django_database_path
 import sqlalchemy
 
@@ -26,32 +30,24 @@ import pytz
 def get_django_database_path():
     """Return URI to django mouse-cloud database.
     
-    Currently this works by checking for a file "db_credentials" either
-    in this directory or in ~/Dropbox/django/mouse2. Probably this should
-    be able to invoke heroku config:get and cache the results?
+    This accesses the environment variable DATABASE_URL which should
+    have been setup at the time of django.setup. This could also be
+    formed from django.conf.settings.DATABASES
     """
     # Connect to the master database
-    this_directory = os.path.dirname(os.path.abspath(__file__))
-    dropbox_directory = os.path.expanduser('~/Dropbox/django/mouse2/mouse2')
-    database_path = None
-    for dirname in [this_directory, dropbox_directory]:
-        filename = os.path.join(dirname, 'db_credentials')
-        try:
-            with open(os.path.join(dirname, "db_credentials"), "r") as fi:
-                database_path = fi.read().strip()
-        except IOError:
-            continue
-    
-    if database_path is None:
-        raise IOError("cannot find URL to mouse-cloud database")
-    
-    return database_path
+    database_uri = os.environ.get('DATABASE_URL')
+    if database_uri is None:
+        raise ValueError("cannot get DATABASE_URL from environment")
+    return database_uri
 
 def get_django_session_table():
     """Connects to mouse-cloud and extracts session table as DataFrame.
     
     Uses get_django_database_path to access mouse-cloud. Uses pandas
     to read the appropriate tables. Renames and demungs a few columns.
+    
+    Probably should rewrite this to use the django ORM instead of
+    sqlalchemy.
     
     Returns: DataFrame, with these columns
         mouse, stimulus_set, scheduler, date_time_start
@@ -141,7 +137,6 @@ def get_whisker_trims_table():
     
     return trims
 
-
 def calculate_perf_by_training_stage(partition_params=(
     'stimulus_set', 'scheduler', 'trim', 'board', 'box',)):
     """Calculate perf on each day and split by training stage
@@ -157,10 +152,16 @@ def calculate_perf_by_training_stage(partition_params=(
     gets = getstarted()
     partition_params = list(partition_params)
 
-    # Get the session table from django and drop mice we don't care about
+    # Get the session table from django
     session_table = get_django_session_table()
+    
+    # Drop non-active mice
     session_table = session_table[
         session_table.mouse.isin(gets['active_mice'])]
+    
+    # Drop old data
+    session_table = session_table[session_table.date_time_start >
+        datetime.date.today() - datetime.timedelta(days=70)]
 
     # Get the trims table
     trims = get_whisker_trims_table()
@@ -254,40 +255,48 @@ def get_paths():
     return PATHS
 
 def getstarted():
-    """Return a dict of data about locale, paths, and mice."""
+    """Return a dict of data about locale, paths, and mice.
+    
+    This information is extracted from the django database.
+    
+    Keys:
+        'locale' : name of locale
+        'paths' : dict of paths
+        'mice' : list of all mice in the database
+        'rigs' : deprecated because it uses bdf rig names instead of django
+            box names
+        'boxes' : hard-coded list of box names in use
+        'aliases' : empty dict, do not use
+        'cohorts' : list of lists of mouse names
+        'active_mice' : all mice for which in_training is True
+    """
     res = {
         'locale': get_locale(),
         'paths': get_paths(),
         }
-    
-    res['mice'] = ['AM03', 'AM05', 'KF13', 'KM14', 'KF16', 'KF17', 'KF18', 'KF19', 
-        'KM24', 'KM25', 'KF26', 'KF28', 'KF30', 'KF32', 'KF33', 'KF35', 'KF36',
-        'KF37', 'KM38', 'KM39', 'KF40', 'KF41', 'KF42', 'KM43', 'KM44', 'KM45',
-        'KF46', 'KF47', 'KF48', 'KM49', 'KM50', 'KM51', 'KM52', 'KM53',
-        'KM54', 'KF57', 'KF58', 'KF59', 'KF60', 'KF61', 'KF62',
-        'KM63', 'KM64', 'KM65', 'KF69', 'KF71', 'KF72', 'KF73', 'KF74',
-        'KF75', 'KF76', 'KF77', 'KF78', 'KF79', 'KF80', 'KM81', 'KM82', 'KM83',
-        'KM84', 'KM85', 'KM86', 'KM87', 'KM88', 'KF89', 'KF90', 'KM91', 'KM93',
-        'KF94', 'KF95', 'KM96', 'KM97', 'KF98', 'KF99', 'KM100', 'KM101', 'KM102',]
-    
-    res['rigs'] = ['L0', 'L1', 'L2', 'L3', 'L5', 'L6', 'B1', 'B2', 'B3', 'B4']
-    
-    res['aliases'] = {
-        'KF13A': 'KF13',
-        'AM03A': 'AM03',
-        }
 
-    res['cohorts'] = [
-        ['KM84', 'KM85', 'KM86', 'KM87', ],
-        ['KF89', 'KF90', 'KM91', 'KF94', 'KF95',],
-        ['KF98', 'KF99', 'KM100', 'KM101', 'KM102',],
-    ]
+    # Get all mouse names and cohorts
+    qs = runner.models.Mouse.objects.filter(in_training=True)
+    cohort_df = pandas.DataFrame.from_records(list(qs.values_list(
+        'name', 'training_cohort')), columns=['mouse', 'cohort'])
     
+    # Replace all missing cohorts with -1
+    cohort_df.loc[cohort_df.cohort.isnull(), 'cohort'] = -1
+    
+    # Group the mice by cohort
+    cohort2mouse_names = dict([(cohort, list(ser.values)) 
+        for cohort, ser in cohort_df.groupby('cohort')['mouse']])
+
+    # Mouse names
+    res['mice'] = list(
+        runner.models.Mouse.objects.values_list('name', flat=True))
+    res['cohorts'] = cohort2mouse_names.values()
     res['active_mice'] = list(np.concatenate(res['cohorts']))
-
-    # Known mice
-    assert np.all([alias_val in res['mice'] 
-        for alias_val in res['aliases'].values()])
+    res['aliases'] = {}
+    
+    # Hard-coded because these rarely change, except in testing
+    res['boxes'] = ['CR0', 'CR1', 'CR2', 'CR3', 'CR4']
+    res['rigs'] = ['B1', 'B2', 'B3', 'B4']
     
     return res
 
