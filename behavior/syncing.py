@@ -524,7 +524,7 @@ def autosync_behavior_and_video_with_houselight_from_day(date=None, **kwargs):
 def sync_video_with_behavior(bfile, lums=None, video_file=None,
     stop_after_frame=np.inf,
     light_delta=75, diffsize=2, refrac=50,
-    assumed_fps=30., error_if_no_fit=False):
+    assumed_fps=30., error_if_no_fit=False, verbose=False):
     """Sync video with behavioral file
     
     Uses decrements in luminance and the backlight signal to do the sync.
@@ -539,6 +539,8 @@ def sync_video_with_behavior(bfile, lums=None, video_file=None,
     video_file : if lums is None, then calculates them using this
         video_file
     error_if_no_fit : if True and no fit is found, raises Exception
+    verbose : passed to process_chunks_of_video to print out frame
+        number for each chunk
     
     See MCwatch.behavior.syncing.extract_onsets_and_durations for details on
     light_delta, diffsize, and refrac.
@@ -549,7 +551,7 @@ def sync_video_with_behavior(bfile, lums=None, video_file=None,
     if lums is None:
         print "loading luminances ... this will take a while"    
         lums = my.video.process_chunks_of_video(video_file, 
-            n_frames=stop_after_frame)
+            n_frames=stop_after_frame, verbose=verbose)
 
     # Get onsets and durations
     onsets, durations = extract_onsets_and_durations(-lums, 
