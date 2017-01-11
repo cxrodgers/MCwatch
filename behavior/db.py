@@ -273,7 +273,6 @@ def getstarted():
         'rigs' : deprecated because it uses bdf rig names instead of django
             box names
         'boxes' : hard-coded list of box names in use
-        'aliases' : empty dict, do not use
         'cohorts' : list of lists of mouse names
         'active_mice' : all mice for which in_training is True
     """
@@ -299,7 +298,6 @@ def getstarted():
         runner.models.Mouse.objects.values_list('name', flat=True))
     res['cohorts'] = cohort2mouse_names.values()
     res['active_mice'] = list(np.concatenate(res['cohorts']))
-    res['aliases'] = {}
     
     # Hard-coded because these rarely change, except in testing
     res['boxes'] = ['CR0', 'CR1', 'CR2', 'CR3', 'CR4']
@@ -1049,8 +1047,8 @@ def parse_behavior_filenames(all_behavior_files, clean=True):
     Each filename is matched to a pattern which is used to extract the
     rigname, date, and mouse name. Non-matching filenames are discarded.
     
-    clean : if True, also clean up the mousenames by upcasing and applying
-        aliases. Finally, drop the ones not in the official list of mice.
+    clean : if True, also clean up the mousenames by upcasing.
+        Finally, drop the ones not in the official list of mice.
     """
     gets = getstarted()
     
@@ -1106,9 +1104,8 @@ def parse_behavior_filenames(all_behavior_files, clean=True):
         raise IOError("no behavior files found")
 
     elif clean:
-        # Clean the behavior files by upcasing and applying aliases
+        # Clean the behavior files by upcasing
         behavior_files_df.mouse = behavior_files_df.mouse.apply(str.upper)
-        behavior_files_df.mouse.replace(gets['aliases'], inplace=True)
 
         # Drop any that are not in the list of accepted mouse names
         behavior_files_df = behavior_files_df.ix[
