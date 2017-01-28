@@ -7,6 +7,74 @@ import numpy as np
 import matplotlib.pyplot as plt
 import os
 
+
+def calculate_perf_from_trial_matrix(tm, groupby=None, 
+    random_hits_and_errors_only=True,):
+    """Calculate perf from trial matrix split various ways
+    
+    This replaces the other versions in this module and in TrialMatrix.
+    
+    tm : trial_matrix with columns 'outcome' and whatever is in 'groupby'
+    
+    groupby : column names to group by
+        Default: ['rewside']
+    
+    random_hits_and_errors_only : if True, discard all trials that aren't
+        random hits or errors
+    
+    Returns: DataFrame
+        index: MultiIndex with the entries in groupby
+        columns: 'error', 'hit', 'n', 'perf', 'ci_h', 'ci_l'
+    """
+    tm = tm.copy()
+    
+    # Include only random hits and errors
+    if random_hits_and_errors_only:
+        tm = tm[tm['outcome'].isin(['hit', 'error']) & 
+            tm.isrnd]
+    if len(tm) <= 1:
+        raise ValueError("not enough rows in tm")
+
+    # Default groupby
+    if groupby is None:
+        groupby = ['rewside']
+    else:
+        groupby = list(groupby)
+    
+    # Group by whatever is requested, but then always outcome at the end
+    if 'outcome' not in groupby:
+        groupby.append('outcome')
+
+    # Group, now 'error' and 'hit' are columns, and a MultiIndex with the
+    # specified variables
+    outcomedf = tm.groupby(groupby).apply(len).unstack('outcome')
+    
+    # Ensure all ints and no nans
+    outcomedf[outcomedf.isnull()] = 0
+    outcomedf = outcomedf.astype(np.int)
+    
+    # If no hits or no errors, insert zeros
+    for column in ['hit', 'error']:
+        if column not in outcomedf:
+            outcomedf[column] = 0
+    
+    # Calculate perf
+    outcomedf['n'] = outcomedf['hit'] + outcomedf['error']
+    outcomedf['perf'] = outcomedf['hit'] / outcomedf['n']
+
+    # Insert CIs
+    outcomedf['ci_l'] = np.nan
+    outcomedf['ci_h'] = np.nan
+    for idx in outcomedf.index:
+        ci_l, ci_h = my.stats.binom_confint(
+            outcomedf.loc[idx, 'hit'],
+            outcomedf.loc[idx, 'hit'] + outcomedf.loc[idx, 'error']
+        )
+        outcomedf.loc[idx, 'ci_l'] = ci_l
+        outcomedf.loc[idx, 'ci_h'] = ci_h
+    
+    return outcomedf
+
 def calculate_perf_by_number_of_contacts(tm, bins=None):
     """Bin the performance by number of contacts.
     
