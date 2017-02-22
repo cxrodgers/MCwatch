@@ -524,7 +524,8 @@ def autosync_behavior_and_video_with_houselight_from_day(date=None, **kwargs):
 def sync_video_with_behavior(bfile, lums=None, video_file=None,
     stop_after_frame=np.inf,
     light_delta=75, diffsize=2, refrac=50,
-    assumed_fps=30., error_if_no_fit=False, verbose=False):
+    assumed_fps=30., error_if_no_fit=False, verbose=False,
+    return_all_data=False):
     """Sync video with behavioral file
     
     Uses decrements in luminance and the backlight signal to do the sync.
@@ -544,6 +545,12 @@ def sync_video_with_behavior(bfile, lums=None, video_file=None,
     
     See MCwatch.behavior.syncing.extract_onsets_and_durations for details on
     light_delta, diffsize, and refrac.
+    
+    Returns:
+        if not return_all_data:
+            returns b2v_fit
+        if return_all_data:
+            returns dict with b2v_fit, lums, v_onsets, backlight_times
     """    
     # Get the mean luminances
     # Would this be significantly faster if we spatially downsampled?
@@ -573,4 +580,13 @@ def sync_video_with_behavior(bfile, lums=None, video_file=None,
     b2v_fit = longest_unique_fit(v_onsets, backlight_times)    
     if b2v_fit is None and error_if_no_fit:
         raise ValueError("no fit found")
-    return b2v_fit
+    
+    if return_all_data:
+        return {
+            'b2v_fit': b2v_fit,
+            'lums': lums,
+            'v_onsets': v_onsets,
+            'backlight_times': backlight_times,
+        }
+    else:
+        return b2v_fit
