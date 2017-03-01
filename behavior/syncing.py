@@ -297,7 +297,7 @@ def get_light_times_from_behavior_file(session=None, logfile=None):
     return light_on, light_off
 
 def longest_unique_fit(xdata, ydata, start_fitlen=3, ss_thresh=.0003,
-    verbose=True, x_midslice_start=None):
+    verbose=True, x_midslice_start=None, return_all_data=False):
     """Find the longest consecutive string of fit points between x and y.
 
     We start by taking a slice from xdata of length `start_fitlen` 
@@ -329,9 +329,12 @@ def longest_unique_fit(xdata, ydata, start_fitlen=3, ss_thresh=.0003,
         By default, this is the midpoint of `xdata`.
 
     Returns: a linear polynomial fitting from Y to X.
+        Or if return_all_data, also returns the start and stop indices
+        into X and Y that match up. These are Pythonic (half-open).
     """
     # Choose the idx to start with in behavior
     fitlen = start_fitlen
+    last_good_fitlen = 0
     if x_midslice_start is None:
         x_midslice_start = len(xdata) / 2
     keep_going = True
@@ -402,9 +405,19 @@ def longest_unique_fit(xdata, ydata, start_fitlen=3, ss_thresh=.0003,
                 best_ss / len(chosen_idxs), best_fitpoly[0], best_fitpoly[1])
 
         # Increase the size
+        last_good_fitlen = fitlen
         fitlen = fitlen + 1    
     
-    return best_fitpoly
+    if return_all_data:
+        return {
+            'x_start': x_midslice_start - last_good_fitlen,
+            'x_stop': x_midslice_start + last_good_fitlen,
+            'y_start': best_index,
+            'y_stop': best_index + last_good_fitlen * 2,
+            'best_fitpoly': best_fitpoly,
+        }
+    else:
+        return best_fitpoly
 
 def get_95prctl_r_minus_b(frame):
     """Gets the 95th percentile of the distr of Red - Blue in the frame
@@ -577,16 +590,18 @@ def sync_video_with_behavior(bfile, lums=None, video_file=None,
         parsed_df_by_trial, state1=1, show_warnings=True)
 
     # Find the fit
-    b2v_fit = longest_unique_fit(v_onsets, backlight_times)    
+    res = longest_unique_fit(v_onsets, backlight_times, return_all_data=True)    
+    b2v_fit = res['best_fitpoly']
+    
     if b2v_fit is None and error_if_no_fit:
         raise ValueError("no fit found")
     
     if return_all_data:
-        return {
-            'b2v_fit': b2v_fit,
-            'lums': lums,
-            'v_onsets': v_onsets,
-            'backlight_times': backlight_times,
-        }
+        # Add some more stuff to res and return
+        res['lums'] = lums
+        res['video_flash_x'] = v_onsets
+        res['behavior_flash_y'] = backlight_times
+        res['b2v_fit'] = res.pop('best_fitpoly')
+        return res
     else:
         return b2v_fit
