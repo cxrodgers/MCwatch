@@ -5,7 +5,7 @@ import pandas
 import ArduFSM
 import my
 from ArduFSM import TrialMatrix, TrialSpeak, mainloop
-import MCwatch
+import MCwatch.behavior
 
 def index_of_biggest_diffs_across_arr(ser, ncuts_total=3):
     """Return indices of biggest diffs in various segments of arr"""
