@@ -17,7 +17,10 @@ import socket
 import json
 
 # For django ORM
-import runner.models
+try:
+    import runner.models
+except ImportError:
+    pass
 
 # for get_django_database_path
 import sqlalchemy
