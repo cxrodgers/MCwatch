@@ -40,8 +40,15 @@ def plot_by_training_stage():
     fignum, axnum = 0, 0
     fig_l = []
     
+    # Get mouse sorted by number
+    import runner.models
+    mouse_l = runner.models.Mouse.objects.filter(
+        in_training=True).order_by('number').values_list('name', flat=True)
+
     # Plot each mouse in its own axis
-    for mouse, msessions in session_table.groupby('mouse'):
+    gobj = session_table.groupby('mouse')
+    for mouse in mouse_l:
+        msessions = gobj.get_group(mouse)
         mchanges = change_table.ix[msessions.index]
         
         if f is None or axnum == n_mouse_per_figure:
