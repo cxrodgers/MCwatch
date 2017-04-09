@@ -221,7 +221,7 @@ def get_paths():
     LOCALE = get_locale()
     if LOCALE == 'chris-pyramid':
         PATHS = {
-            'database_root': '/home/chris/mnt/marvin/dev/behavior_db',
+            'database_root': '/home/chris/mnt/nas2_home/behavior/behavior_db',
             'presandbox_behavior_dir': '/home/chris/mnt/nas2_home/behavior/runmice',
             'behavior_dir': '/home/chris/mnt/nas2_home/behavior/sandbox_root',
             'video_dir': '/home/chris/mnt/nas2_home/ps3eye/marvin/compressed_eye',
@@ -229,7 +229,7 @@ def get_paths():
 
     elif LOCALE == 'gamma':
         PATHS = {
-            'database_root': '/home/jack/mnt/marvin/dev/behavior_db',
+            'database_root': '/home/jack/mnt/nas2_home/behavior/behavior_db',
             'presandbox_behavior_dir': '/home/jack/mnt/nas2_home/behavior/runmice',
             'behavior_dir': '/home/jack/mnt/nas2_home/behavior/sandbox_root',
             'video_dir': '/home/jack/mnt/nas2_home/ps3eye/marvin/compressed_eye',
@@ -245,7 +245,7 @@ def get_paths():
 
     elif LOCALE == 'nivram':
         PATHS = {
-            'database_root': '/home/chris/mnt/marvin/dev/behavior_db',
+            'database_root': '/home/chris/mnt/nas2_home/behavior/behavior_db',
             'presandbox_behavior_dir': '/home/chris/mnt/nas2_home/behavior/runmice',
             'behavior_dir': '/home/chris/mnt/nas2_home/behavior/sandbox_root',
             'video_dir': '/home/chris/mnt/nas2_home/ps3eye/marvin/compressed_eye',
@@ -253,7 +253,7 @@ def get_paths():
 
     elif LOCALE == 'lumps' or LOCALE == 'lumpy':
         PATHS = {
-            'database_root': '/home/jack/mnt/marvin/dev/behavior_db',
+            'database_root': '/home/jack/mnt/nas2_home/behavior/behavior_db',
             'presandbox_behavior_dir': '/home/jack/mnt/nas2_home/behavior/runmice',
             'behavior_dir': '/home/jack/mnt/nas2_home/behavior/sandbox_root',
             'video_dir': '/home/jack/mnt/nas2_home/ps3eye/marvin/compressed_eye',
