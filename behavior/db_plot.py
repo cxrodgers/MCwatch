@@ -48,7 +48,11 @@ def plot_by_training_stage():
     # Plot each mouse in its own axis
     gobj = session_table.groupby('mouse')
     for mouse in mouse_l:
-        msessions = gobj.get_group(mouse)
+        try:
+            msessions = gobj.get_group(mouse)
+        except KeyError:
+            # in training, but no data
+            continue
         mchanges = change_table.ix[msessions.index]
         
         if f is None or axnum == n_mouse_per_figure:
