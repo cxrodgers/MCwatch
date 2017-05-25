@@ -170,8 +170,8 @@ def calculate_perf_by_radius_distance_and_side(tm, outcome_column='outcome'):
     # Plot model performance vs distance
     tm = tm.copy()
     if 'radius' not in tm.columns:
-        tm['radius'] = 'C0'
-        tm.loc[tm.stepper_pos.isin([50, 150]), 'radius'] = 'C1'
+        tm['radius'] = 'hard'
+        tm.loc[tm.stepper_pos.isin([50, 150]), 'radius'] = 'easy'
     
     # Include only random hits and errors
     tm = tm[
@@ -223,18 +223,18 @@ def plot_perf_by_radius_distance_and_side(perfdf, ax=None):
         f, ax = plt.subplots()
     
     rewside2color = {'left': 'blue', 'right': 'red'}
-    radius2ls = {'C0': '--', 'C1': '-'}
+    radius2ls = {'hard': '--', 'easy': '-'}
     for rewside in ['left', 'right']:
-        for radius in ['C0', 'C1']:
+        for radius in ['hard', 'easy']:
             
             sub = perfdf[rewside][radius]
             ax.plot(sub.index, sub.values, 
                 color=rewside2color[rewside], ls=radius2ls[radius])
     
-    ax.plot([1690, 1850], [.5, .5], 'k--')
+    ax.plot([1670, 1850], [.5, .5], 'k--')
     
-    ax.set_xticks([1690, 1770, 1850])
-    ax.set_xticklabels(['+6.3', '+3.15', 'closest'])
+    ax.set_xticks([1670, 1760, 1850])
+    ax.set_xticklabels(['+5.4', '+2.7', 'closest'])
     ax.set_xlabel('stimulus position (mm)')
     
     # Reverse the order of the x-axis
@@ -258,8 +258,8 @@ def plot_perf_by_distance_and_side(perfdf, ax=None):
     
     ax.plot([1690, 1850], [.5, .5], 'k--')
     
-    ax.set_xticks([1690, 1770, 1850])
-    ax.set_xticklabels(['+6.3', '+3.15', 'closest'])
+    ax.set_xticks([1670, 1760, 1850])
+    ax.set_xticklabels(['+5.4', '+2.7', 'closest'])
     ax.set_xlabel('stimulus position (mm)')
     
     # Reverse the order of the x-axis
