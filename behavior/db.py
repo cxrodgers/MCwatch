@@ -887,9 +887,17 @@ def search_for_behavior_files(
             os.path.exists(os.path.join(sd, 'Script', 'TwoChoice.py')) or
             os.path.exists(os.path.join(sd, 'Script', 'LickTrain.py'))):
             continue
+        
+        # Find unique logfile in that directory
         logfiles = glob.glob(os.path.join(sd, 'Script', 'logfiles', 'ardulines.*'))
-        assert len(logfiles) == 1
-        all_behavior_files.append(logfiles[0])
+        if len(logfiles) == 0:
+            print "warning: cannot find logfile in %s" % sd
+            continue
+        elif len(logfiles) > 1:
+            print "warning: non-unique logfiles in %s, skipping" % sd
+            continue
+        else:
+            all_behavior_files.append(logfiles[0])
     
     # Parse out metadata for each
     behavior_files_df = parse_behavior_filenames(all_behavior_files, 
