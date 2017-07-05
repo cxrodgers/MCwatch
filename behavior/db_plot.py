@@ -586,7 +586,7 @@ def display_perf_by_servo(session=None, tm=None, ax=None, mean_meth='lr_pool'):
         xax = subperf['servo_pos']
         yax = subperf['perf']
         ax.plot(xax, yax, color=colors[rwsd], marker='s', ls='-')
-    ax.plot(xax, meanperf.values, color=colors['mean'], marker='s', ls='-')
+    ax.plot(meanperf.index, meanperf.values, color=colors['mean'], marker='s', ls='-')
     ax.set_xlim((resdf['servo_pos'].min() - 50, resdf['servo_pos'].max() + 50))
     ax.set_xticks(xticks)
     ax.plot(ax.get_xlim(), [.5, .5], 'k-')
