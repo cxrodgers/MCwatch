@@ -120,7 +120,7 @@ def get_whisker_trims_table():
         except TypeError:
             # Must be a timestamp
             res = datetime.datetime.combine(dateobj, 
-                timeobj.to_datetime().time())
+                timeobj.to_pydatetime().time())
         return pandas.Timestamp(res)
     
     # Get the whisker trims
