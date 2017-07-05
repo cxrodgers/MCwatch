@@ -56,3 +56,34 @@ def get_choice_times(behavior_filename, verbose=False):
         parsed_df_by_trial, state0=resp_win_num, show_warnings=False)
     
     return choice_times    
+
+def get_included_trials(trial_times, data_range, t_start=0, t_stop=0):
+    """Identify the trials included in a temporal range.
+    
+    trial_times : Series of trial times (e.g., rwin times) indexed by
+        trial labels
+    
+    data_range : 2-tuple (start, stop) specifying interval to include
+    
+    t_start, t_stop : amount of time before (after) each trial time that
+        must be within data_range in order for that trial to be included.
+    
+    Returns: trial_labels that are included    
+
+    Ex:
+    ## Get the trial matrix
+    tm = MCwatch.behavior.db.get_trial_matrix(vs.bsession_name, True)
+
+    # Include all random trials
+    tm = my.pick_rows(tm, isrnd=True, outcome=['hit', 'error'])
+    
+    # Identify range of trials to include
+    video_range_bbase = extras.get_video_range_bbase(vs)
+    included_trials = extras.get_included_trials(tm['rwin_time'], 
+        data_range=video_range_bbase, t_start=-2, t_stop=0)
+    tm = tm.ix[included_trials]
+    """
+    return trial_times[
+        (trial_times + t_start >= data_range[0]) &
+        (trial_times + t_stop < data_range[1])
+        ].index
