@@ -39,7 +39,7 @@ def daily_update_behavior():
     concatted = pandas.concat([current_bdf, newly_added_bdf],
         ignore_index=True, verify_integrity=True)
     new_bdf = concatted.drop_duplicates(subset='session',
-        take_last=True).reset_index(drop=True)
+        keep='last').reset_index(drop=True)
 
     # store copy for error check
     new_bdf_copy = new_bdf.copy()
