@@ -804,8 +804,11 @@ def calculate_perf_metrics(trial_matrix):
         len(trial_matrix)
 
     # Calculate performance
-    rec['perf_all'] = float(len(my.pick(trial_matrix, outcome='hit'))) / \
-        len(my.pick(trial_matrix, outcome=['hit', 'error']))
+    try:
+        rec['perf_all'] = float(len(my.pick(trial_matrix, outcome='hit'))) / \
+            len(my.pick(trial_matrix, outcome=['hit', 'error']))
+    except ZeroDivisionError:
+        rec['perf_all'] = np.nan
     
     # Calculate unforced performance, protecting against low trial count
     n_nonbad_nonspoiled_trials = len(
