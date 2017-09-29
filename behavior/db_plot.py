@@ -223,9 +223,10 @@ def status_check(delta_days=30):
 
 
 def plot_logfile_check(logfile, state_names='original'):
-    """Plots a graphical representation of the state transitions
+    """Graphical debugging info about state transitions.
     
-    Shows transition probabilities and mean times in each state.
+    Figure 1: graph of states and transitions
+    Figure 2: histograms of time spent in each state
     """
     # Run the check
     check_res = MCwatch.behavior.db.check_logfile(logfile)
@@ -279,11 +280,12 @@ def plot_logfile_check(logfile, state_names='original'):
         data = check_res['node_all_durations'][node_num]
         rng = data.max() - data.min()
         
-        tit_str = "%d: %s, %0.3f" % (node_num, 
+        tit_str = "%d: %s, range %0.3fs" % (node_num, 
             state_num2names[node_num].lower(), rng)
         ax.set_title(tit_str, size='small')
         ax.hist(data)
         
+        # Enforce a minimum width of x-axis of 10ms
         if np.diff(ax.get_xlim()) < .01:
             mean_ax_xlim = np.mean(ax.get_xlim())
             ax.set_xlim((mean_ax_xlim - .005, mean_ax_xlim + .005))
