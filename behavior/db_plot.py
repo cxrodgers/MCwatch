@@ -223,6 +223,10 @@ def status_check(delta_days=30):
 
 
 def plot_logfile_check(logfile, state_names='original'):
+    """Plots a graphical representation of the state transitions
+    
+    Shows transition probabilities and mean times in each state.
+    """
     # Run the check
     check_res = MCwatch.behavior.db.check_logfile(logfile)
 
@@ -254,10 +258,12 @@ def plot_logfile_check(logfile, state_names='original'):
 
     # Draw
     pos = nx.circular_layout(G)
-    pos[17] = np.asarray([.25, .05])
-    pos[9] = np.asarray([.45, .05])
-    pos[8] = np.asarray([0, .05])
-    pos[13] = np.asarray([.5, .5])
+    
+    # Manually adjust a few positions
+    pos[17] = np.asarray([-.6, -.8]) # post-reward pause
+    pos[9] = np.asarray([-.3, -.8]) # reward_r
+    pos[8] = np.asarray([-.9, -.8]) # reward_l
+    pos[13] = np.asarray([0, 0]) # ITI
     f, ax = plt.subplots(figsize=(14, 8))
     nx.draw(G, pos, ax=ax, with_labels=False, node_size=3000, node_shape='s')
     nx.draw_networkx_edge_labels(G, pos, edge_labels=edge_labels, font_size=10)
