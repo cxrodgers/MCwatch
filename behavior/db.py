@@ -147,12 +147,19 @@ def get_whisker_trims_table():
     
     return trims
 
-def calculate_perf_by_training_stage(partition_params=(
-    'stimulus_set', 'scheduler', 'trim', 'board', 'box',)):
+def calculate_perf_by_training_stage(partition_params=None, drop_inactive=True,
+    n_days_history=70, ):
     """Calculate perf on each day and split by training stage
     
     Splits on: whisker trims (from google doc), scheduler and stim set
     (from mouse-cloud)
+    
+    partition_params : What counts as a change
+        default: 'stimulus_set', 'scheduler', 'trim', 'board', 'box'
+    
+    drop_inactive : if True, drop mice that are not in 'active_mice'
+    
+    n_days_history : if not None, keep only data from the past this many days
     
     Returns: session_table, change_table
         session_table : DataFrame, with 'partition' column
@@ -160,18 +167,24 @@ def calculate_perf_by_training_stage(partition_params=(
             where the partition occurred for that parameter
     """
     gets = getstarted()
-    partition_params = list(partition_params)
+    
+    if partition_params is None:
+        partition_params = ['stimulus_set', 'scheduler', 'trim', 'board', 'box']
 
     # Get the session table from django
     session_table = get_django_session_table()
     
     # Drop non-active mice
-    session_table = session_table[
-        session_table.mouse.isin(gets['active_mice'])]
+    if drop_inactive:
+        session_table = session_table[
+            session_table.mouse.isin(gets['active_mice'])]
     
     # Drop old data
-    session_table = session_table[session_table.date_time_start >
-        datetime.date.today() - datetime.timedelta(days=70)]
+    if n_days_history is not None:
+        start_date = (datetime.date.today() - 
+            datetime.timedelta(days=n_days_history))
+        session_table = session_table[
+            session_table.date_time_start > start_date]
 
     # Get the trims table
     trims = get_whisker_trims_table()
