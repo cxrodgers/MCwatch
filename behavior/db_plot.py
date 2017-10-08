@@ -93,7 +93,7 @@ def shorten_param_value(param, value):
     return value
 
 def plot_by_training_stage_one_mouse(msessions, mchanges, ax=None,
-    mouse=None, start_date=None, delta_days=60):
+    mouse=None, start_date=None, delta_days=60, set_xticks_as_dates=True):
     """Plot single mouse's performance split by training stage.
     
     msessions : subset of session_table for a single mouse from 
@@ -127,6 +127,8 @@ def plot_by_training_stage_one_mouse(msessions, mchanges, ax=None,
     except IndexError:
         # nothing to plot
         print "no data to plot"
+        ax.set_xticks([])
+        ax.set_yticks([])
         return ax
     
     # plot each partition
@@ -160,9 +162,10 @@ def plot_by_training_stage_one_mouse(msessions, mchanges, ax=None,
         ax.plot([cutval, cutval], [0, 1], 'r-')
 
     ax.set_ylim((0, 1))
-    ax.set_xticks(xt)
-    ax.set_xticklabels(xtl, rotation=45)
-    ax.set_xlim((xt[start_idx] - .5, xt[-1] + .5))
+    if set_xticks_as_dates:
+        ax.set_xticks(xt)
+        ax.set_xticklabels(xtl, rotation=45)
+        ax.set_xlim((xt[start_idx] - .5, xt[-1] + .5))
     ax.plot(ax.get_xlim(), [.5, .5], 'k--')
     
     return ax
