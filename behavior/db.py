@@ -272,6 +272,14 @@ def get_paths():
             'video_dir': '/home/jack/mnt/nas2_home/ps3eye/marvin/compressed_eye',
             }
 
+    elif LOCALE == 'xps':
+        PATHS = {
+            'database_root': '/home/jack/mnt/nas2_home/behavior/behavior_db',
+            'presandbox_behavior_dir': '/home/jack/mnt/nas2_home/behavior/runmice',
+            'behavior_dir': '/home/jack/mnt/nas2_home/behavior/sandbox_root',
+            'video_dir': '/home/jack/mnt/nas2_home/ps3eye/marvin/compressed_eye',
+            }
+
     else:
         raise ValueError("unknown locale %s" % LOCALE)
     
