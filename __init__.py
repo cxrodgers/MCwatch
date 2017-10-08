@@ -10,9 +10,16 @@ Importing this module triggers the following
 The mouse-cloud database can then be accessed via the django ORM.
 
 Code for analyzing behavior, neural, and whisker data is contained in
-those submodules. I woud like to allow importing those submodules without
-triggering or requiring access to the django database, but I don't know
-how because this __init__ will always be run.
+those submodules. That code can still be loaded even if no django is
+available. Import guards are used here to silently continue if the django
+project or its dependencies aren't present.
+
+If `runner.models` cannot be imported, debug like this:
+
+import os, sys, django
+os.environ.setdefault("DJANGO_SETTINGS_MODULE", "mouse2.settings")
+sys.path.append(os.path.expanduser('~/dev/mouse-cloud'))
+django.setup()
 """
 
 import os
@@ -53,7 +60,10 @@ def _setup_django():
 try:
     _setup_django()
 except ImportError:
-    # this happens if mouse-cloud doesn't exist at the expected pat
+    # this happens if mouse-cloud doesn't exist at the expected path
+    # it can also happen if a mouse-cloud requirement isn't installed
+    #
+    # and see what happens
     pass
 
 # Now we can import the django modules
