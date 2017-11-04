@@ -147,6 +147,64 @@ def get_whisker_trims_table():
     
     return trims
 
+def structure_trims(trims):
+    """Return whisker trims in a more structured format
+    
+    trims : Results of get_whisker_trims_table()
+    """
+    def convert_trim_string_to_list(s):
+        """Convert trim string to dict of whisker name to True/False"""
+        split_s = [ss.strip() for ss in s.split(';')]
+        whiskers_to_check = ['b', 'g', 'C1', 'C2', 'C3', 'C4']
+        res = dict([(whisker, False) for whisker in whiskers_to_check])
+        
+        for whisker in whiskers_to_check:
+            if whisker in split_s:
+                res[whisker] = True
+        
+        if 'None' in split_s:
+            return res
+
+        if 'C*' in split_s:
+            for whisker in ['C1', 'C2', 'C3', 'C4']:
+                res[whisker] = True
+        
+        if 'C1-3' in split_s:
+            for whisker in ['C1', 'C2', 'C3']:
+                res[whisker] = True
+
+        if 'C1-2' in split_s:
+            for whisker in ['C1', 'C2']:
+                res[whisker] = True
+        
+        if 'C1-3' in split_s:
+            for whisker in ['C1', 'C2', 'C3']:
+                res[whisker] = True
+        
+        return res
+
+    # Apply the conversion
+    structured_trims = trims['Which Spared'].apply(
+        convert_trim_string_to_list)
+
+    # take multi index from trims
+    midx = pandas.MultiIndex.from_arrays(
+        [trims['Mouse'].values, trims['dt'].values],
+        names=['mouse', 'dt'],
+    )
+
+    # dataframe it
+    structured_trims_df = pandas.DataFrame.from_records(
+        pandas.DataFrame.from_records(structured_trims.values),
+        index=midx,
+    )
+    
+    # Count
+    structured_trims_df['n_whiskers'] = structured_trims_df.sum(1).astype(
+        np.int)
+    
+    return structured_trims_df
+
 def calculate_perf_by_training_stage(partition_params=None, drop_inactive=True,
     n_days_history=70, ):
     """Calculate perf on each day and split by training stage
