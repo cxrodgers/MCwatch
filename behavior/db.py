@@ -242,7 +242,7 @@ def calculate_perf_by_training_stage(partition_params=None, drop_inactive=True,
         start_date = (datetime.date.today() - 
             datetime.timedelta(days=n_days_history))
         session_table = session_table[
-            session_table.date_time_start > start_date]
+            session_table.date_time_start > pandas.Timestamp(start_date)]
 
     # Get the trims table
     trims = get_whisker_trims_table()
