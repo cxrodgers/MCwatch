@@ -195,7 +195,7 @@ def daily_update_perf_metrics(start_date=None, verbose=False):
             continue
         
         # Skip anything that is not TwoChoice
-        if brow['protocol'] != 'TwoChoice':
+        if brow['protocol'] not in ['TwoChoice', 'TwoChoiceJung']:
             continue
         
         # Otherwise run

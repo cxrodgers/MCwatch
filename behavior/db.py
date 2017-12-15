@@ -967,6 +967,7 @@ def search_for_behavior_files(
         # Skip if not TwoChoice or LickTrain
         if not (
             os.path.exists(os.path.join(sd, 'Script', 'TwoChoice.py')) or
+            os.path.exists(os.path.join(sd, 'Script', 'TwoChoiceJung.py')) or
             os.path.exists(os.path.join(sd, 'Script', 'LickTrain.py'))):
             continue
         
@@ -1180,6 +1181,8 @@ def parse_behavior_filenames(all_behavior_files, clean=True):
             script_files = os.listdir(os.path.split(json_file)[0])
             if 'TwoChoice.py' in script_files:
                 protocol = 'TwoChoice'
+            elif 'TwoChoiceJung.py' in script_files:
+                protocol = 'TwoChoiceJung'
             elif 'LickTrain.py' in script_files:
                 protocol = 'LickTrain'
             else:
