@@ -394,7 +394,7 @@ def longest_unique_fit(xdata, ydata, start_fitlen=3, ss_thresh=.0003,
             break
         
         # Take the best fit
-        best_index = rdf['ss'].argmin()
+        best_index = rdf['ss'].idxmin()
         best_ss = rdf['ss'].min()
         best_fitpoly = rdf['fitpoly'].ix[best_index]
         if verbose:
