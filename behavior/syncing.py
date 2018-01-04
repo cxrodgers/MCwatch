@@ -296,8 +296,54 @@ def get_light_times_from_behavior_file(session=None, logfile=None):
     
     return light_on, light_off
 
+def refit_to_maximum_overlap(xdata, ydata, fitdata):
+    """Refit results from longest_unique_fit to max window
+    
+    longest_unique_fit will terminate when it runs out of data on either
+    end, or at a bad sample point. This function uses the best xvy 
+    determined by longest_unique_fit, identifies the largest window of
+    overlap between xdata and ydata, and refits over this largest window.
+    
+    This will fail badly if there are extraneous data points in xdata or
+    ydata, for instance from another concatenated session!
+    
+    Returns: dict
+        A copy of `fitdata` with extra items about the refit
+    """
+
+    # How many extra samples on the left
+    extra_left = np.min([fitdata['x_start'], fitdata['y_start']])
+    extra_right = np.min([
+        len(xdata) - fitdata['x_stop'],
+        len(ydata) - fitdata['y_stop'],
+    ])
+    
+    # Store these maximized windows
+    refitdata = fitdata.copy()
+    refitdata['refit_x_start'] = refitdata['x_start'] - extra_left
+    refitdata['refit_y_start'] = refitdata['y_start'] - extra_left
+    refitdata['refit_x_stop'] = refitdata['x_stop'] + extra_right
+    refitdata['refit_y_stop'] = refitdata['y_stop'] + extra_right
+    refitdata['xlen'] = len(xdata)
+    refitdata['ylen'] = len(ydata)
+    refitdata['nfit'] = refitdata['refit_x_stop'] - refitdata['refit_x_start']
+    
+    # Refit over maximum window
+    x_over_max_window = xdata[refitdata['refit_x_start']:refitdata['refit_x_stop']]
+    y_over_max_window = ydata[refitdata['refit_y_start']:refitdata['refit_y_stop']]
+    refitdata['refit_best_poly'] = np.polyfit(
+        y_over_max_window, x_over_max_window, deg=1)
+    refitdata['refit_x_pred_from_y'] = np.polyval(
+        refitdata['refit_best_poly'], y_over_max_window)
+    refitdata['refit_resids'] = (refitdata['refit_x_pred_from_y'] - 
+        x_over_max_window)
+    refitdata['refit_mse'] = np.mean(refitdata['refit_resids'] ** 2)    
+    
+    return refitdata
+
 def longest_unique_fit(xdata, ydata, start_fitlen=3, ss_thresh=.0003,
-    verbose=True, x_midslice_start=None, return_all_data=False):
+    verbose=True, x_midslice_start=None, return_all_data=False,
+    refit_data=False):
     """Find the longest consecutive string of fit points between x and y.
 
     We start by taking a slice from xdata of length `start_fitlen` 
@@ -327,7 +373,16 @@ def longest_unique_fit(xdata, ydata, start_fitlen=3, ss_thresh=.0003,
     verbose : issue status messages
     x_midslice_start : the center of the data to take from `xdata`. 
         By default, this is the midpoint of `xdata`.
-
+    return_all_data : boolean
+        Return x_start, y_start, etc.
+    refit_data : boolean, only matters if return_all_data = True
+        Once the best xvy is determined, do a last refit on the maximum
+        overlap of xdata and ydata.  Useful because normally execution
+        stops when we run out of data (on either end) or when a bad point
+        is reached. However, this will fail badly if either xdata or ydata
+        contains spurious datapoints (i.e., concatenated from another 
+        session).
+    
     Returns: a linear polynomial fitting from Y to X.
         Or if return_all_data, also returns the start and stop indices
         into X and Y that match up. These are Pythonic (half-open).
@@ -409,13 +464,20 @@ def longest_unique_fit(xdata, ydata, start_fitlen=3, ss_thresh=.0003,
         fitlen = fitlen + 1    
     
     if return_all_data:
-        return {
+        # Store results in dict
+        fitdata = {
             'x_start': x_midslice_start - last_good_fitlen,
             'x_stop': x_midslice_start + last_good_fitlen,
             'y_start': best_index,
             'y_stop': best_index + last_good_fitlen * 2,
             'best_fitpoly': best_fitpoly,
-        }
+        }            
+        
+        # Optionally refit to max overlap
+        if refit_data:
+            fitdata = refit_to_maximum_overlap(xdata, ydata, fitdata)
+        
+        return fitdata
     else:
         return best_fitpoly
 
