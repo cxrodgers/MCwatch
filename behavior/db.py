@@ -317,6 +317,14 @@ def get_paths():
             'video_dir': '/home/mouse/mnt/nas2_home/ps3eye/marvin/compressed_eye',
             }
 
+    elif LOCALE == 'texture':
+        PATHS = {
+            'database_root': '/mnt/nas2_home/behavior/behavior_db',
+            'presandbox_behavior_dir': '/mnt/nas2_home/behavior/runmice',
+            'behavior_dir': '/mnt/nas2_home/behavior/sandbox_root',
+            'video_dir': '/mnt/nas2_home/ps3eye/texture/compressed_eye',
+            }
+
     elif LOCALE == 'nivram':
         PATHS = {
             'database_root': '/home/chris/mnt/nas2_home/behavior/behavior_db',
