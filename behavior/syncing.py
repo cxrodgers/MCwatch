@@ -276,32 +276,25 @@ def extract_duration_of_onsets2(onsets, offsets):
 
     return np.asarray(onsets3), np.asarray(durations)
 
-
-def get_light_times_from_behavior_file(session=None, logfile=None):
+def get_light_times_from_behavior_file(trial_matrix):
     """Return time light goes on and off in logfile from session
     
     Currently the light turns off for 133ms at the beginning of the
-    TRIAL_START state. However, because it runs communications before
-    pulsing the light, the reported time can be jittered.
+    TRIAL_START state. Two caveats:
+    * The actual ST_CHG2 line is before the TRL_START token, so it is
+    technically assigned to the previous trial. So don't look for a state
+    change.
+    * The Arduino runs communications before pulsing the light, so the 
+    reported time can be jittered. The only way around this would be to
+    move the pulse command before commmunications.
+    
+    Okay, so just return 'start_time'. Keep this function for consistency.
     
     Returns: time that the backlight turned off on each trial
     """
-    # Get the lines from the session name or the logfile
-    if session is not None:
-        lines = MCwatch.behavior.db.get_logfile_lines(session)
-    elif logfile is not None:
-        lines = TrialSpeak.read_lines_from_file(logfile)
-    else:
-        raise ValueError("must provide either session or logfile")
-
-    # Find the time of transition into TRIAL_START (state #1)
-    # This is when the light pulses off
-    parsed_df_by_trial = (
-        ArduFSM.TrialSpeak.parse_lines_into_df_split_by_trial(lines))
-    backlight_times = ArduFSM.TrialSpeak.identify_state_change_times(
-        parsed_df_by_trial, state1=1, show_warnings=True)    
-    
-    return backlight_times
+    if not hasattr(trial_matrix, 'columns'):
+        raise ValueError("provide trial matrix, not bfile")
+    return trial_matrix['start_time']
 
 def refit_to_maximum_overlap(xdata, ydata, fitdata):
     """Refit results from longest_unique_fit to max window
@@ -541,71 +534,7 @@ def get_or_save_lums(session, lumdir=None, meth='gray', verbose=True,
     
     return lums
     
-
-def autosync_behavior_and_video_with_houselight(session, save_result=True,
-    light_delta=30, diffsize=2, refrac=50, verbose=False, 
-    image_w=320, image_h=240):
-    """Main autosync function
-    
-    Loads lums and behavioral onsets from session.
-    Runs through the longest_unique_fit function with various ss_thresh
-    Stores if fit found
-    
-    save_result: whether to write to db
-    light_delta: size of lum delta to detect
-        30 works well for dim lamp; 4 if direct IR illum
-    """
-    # Get metadata about session
-    sbvdf = MCwatch.behavior.db.get_synced_behavior_and_video_df().set_index('session')
-    session_row = sbvdf.ix[session]
-    guess_vvsb_start = session_row['guess_vvsb_start']
-    vfilename = session_row['filename_video']
-    bfile = session_row['filename']
-
-    # Get the lums ... this takes a while
-    # We cache it here so that sync_video_with_behavior doesn't have to
-    lums = get_or_save_lums(session, verbose=verbose, 
-        image_w=image_w, image_h=image_h)
-
-    # Fit the data
-    b2v_fit = sync_video_with_behavior(bfile, lums=lums, video_file=vfilename,
-        light_delta=light_delta, diffsize=diffsize, refrac=refrac)
-    if b2v_fit is None:
-        print "no fit found"
-
-    # Store
-    if save_result:
-        if b2v_fit is not None:
-            MCwatch.behavior.db.set_manual_bv_sync(session, b2v_fit)
-
-    return b2v_fit
-
-
-def autosync_behavior_and_video_with_houselight_from_day(date=None, **kwargs):
-    """Autosync all sessions using house light from specified date"""
-    # Load metadata
-    msdf = MCwatch.behavior.db.get_manual_sync_df()
-    sbvdf = MCwatch.behavior.db.get_synced_behavior_and_video_df()
-    sbvdf_dates = sbvdf['dt_end'].apply(lambda dt: dt.date())
-    
-    # Set to most recent date in database if None
-    if date is None:
-        date = sbvdf_dates.max()
-    
-    # Choose the ones to display
-    display_dates = sbvdf.ix[sbvdf_dates == date]
-    if len(display_dates) > 20:
-        raise ValueError("too many dates")
-
-    for idx, row in display_dates.iterrows():
-        session = row['session']
-        if session in msdf.index:
-            print session, "already synced"
-        else:
-            print session
-            autosync_behavior_and_video_with_houselight(session, **kwargs)
-
-def sync_video_with_behavior(bfile, lums=None, video_file=None,
+def sync_video_with_behavior(trial_matrix, lums=None, video_file=None,
     stop_after_frame=np.inf,
     light_delta=75, diffsize=2, refrac=50,
     assumed_fps=30., error_if_no_fit=False, verbose=False,
@@ -636,6 +565,10 @@ def sync_video_with_behavior(bfile, lums=None, video_file=None,
         if return_all_data:
             returns dict with b2v_fit, lums, v_onsets, backlight_times
     """    
+    # Error check because the function call has changed
+    if not hasattr(trial_matrix, 'columns'):
+        raise ValueError("must provide trial_matrix, not bfile")
+    
     # Get the mean luminances
     # Would this be significantly faster if we spatially downsampled?
     # Or used ffmpeg's native calculations?
@@ -652,7 +585,7 @@ def sync_video_with_behavior(bfile, lums=None, video_file=None,
     v_onsets = onsets / assumed_fps
 
     # Find the time of backlight pulse
-    backlight_times = get_light_times_from_behavior_file(logfile=bfile)
+    backlight_times = get_light_times_from_behavior_file(trial_matrix)
 
     # Find the fit
     res = longest_unique_fit(v_onsets, backlight_times, return_all_data=True,
