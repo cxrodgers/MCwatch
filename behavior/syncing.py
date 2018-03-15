@@ -278,7 +278,15 @@ def extract_duration_of_onsets2(onsets, offsets):
 
 
 def get_light_times_from_behavior_file(session=None, logfile=None):
-    """Return time light goes on and off in logfile from session"""
+    """Return time light goes on and off in logfile from session
+    
+    Currently the light turns off for 133ms at the beginning of the
+    TRIAL_START state. However, because it runs communications before
+    pulsing the light, the reported time can be jittered.
+    
+    Returns: time that the backlight turned off on each trial
+    """
+    # Get the lines from the session name or the logfile
     if session is not None:
         lines = MCwatch.behavior.db.get_logfile_lines(session)
     elif logfile is not None:
@@ -286,15 +294,14 @@ def get_light_times_from_behavior_file(session=None, logfile=None):
     else:
         raise ValueError("must provide either session or logfile")
 
-    # They turn on in ERROR (14), INTER_TRIAL_INTERVAL (13), 
-    # and off in ROTATE_STEPPER1 (2)
-    parsed_df_by_trial = TrialSpeak.parse_lines_into_df_split_by_trial(lines)
-    light_on = TrialSpeak.identify_state_change_times(
-        parsed_df_by_trial, state1=[13, 14], show_warnings=False)
-    light_off = TrialSpeak.identify_state_change_times(
-        parsed_df_by_trial, state0=2)
+    # Find the time of transition into TRIAL_START (state #1)
+    # This is when the light pulses off
+    parsed_df_by_trial = (
+        ArduFSM.TrialSpeak.parse_lines_into_df_split_by_trial(lines))
+    backlight_times = ArduFSM.TrialSpeak.identify_state_change_times(
+        parsed_df_by_trial, state1=1, show_warnings=True)    
     
-    return light_on, light_off
+    return backlight_times
 
 def refit_to_maximum_overlap(xdata, ydata, fitdata):
     """Refit results from longest_unique_fit to max window
@@ -644,14 +651,8 @@ def sync_video_with_behavior(bfile, lums=None, video_file=None,
     # Convert to seconds in the spurious timebase
     v_onsets = onsets / assumed_fps
 
-    # Get the data from Ardulines
-    lines = ArduFSM.TrialSpeak.read_lines_from_file(bfile)
-    parsed_df_by_trial = \
-        ArduFSM.TrialSpeak.parse_lines_into_df_split_by_trial(lines)
-
-    # Find the time of transition into state 1
-    backlight_times = ArduFSM.TrialSpeak.identify_state_change_times(
-        parsed_df_by_trial, state1=1, show_warnings=True)
+    # Find the time of backlight pulse
+    backlight_times = get_light_times_from_behavior_file(logfile=bfile)
 
     # Find the fit
     res = longest_unique_fit(v_onsets, backlight_times, return_all_data=True,
