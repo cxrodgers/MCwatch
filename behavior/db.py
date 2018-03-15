@@ -189,7 +189,7 @@ def structure_trims(trims):
 
     # take multi index from trims
     midx = pandas.MultiIndex.from_arrays(
-        [trims['Mouse'].values, trims['dt'].values],
+        [trims['Mouse'].values, trims['dt']],
         names=['mouse', 'dt'],
     )
 
@@ -202,6 +202,9 @@ def structure_trims(trims):
     # Count
     structured_trims_df['n_whiskers'] = structured_trims_df.sum(1).astype(
         np.int)
+    
+    # Sort
+    structured_trims = structured_trims.sort_index()
     
     return structured_trims_df
 
