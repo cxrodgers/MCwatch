@@ -471,6 +471,8 @@ def longest_unique_fit(xdata, ydata, start_fitlen=3, ss_thresh=.0003,
             'y_start': best_index,
             'y_stop': best_index + last_good_fitlen * 2,
             'best_fitpoly': best_fitpoly,
+            'xdata': xdata,
+            'ydata': ydata,
         }            
         
         # Optionally refit to max overlap
@@ -600,7 +602,7 @@ def sync_video_with_behavior(bfile, lums=None, video_file=None,
     stop_after_frame=np.inf,
     light_delta=75, diffsize=2, refrac=50,
     assumed_fps=30., error_if_no_fit=False, verbose=False,
-    return_all_data=False):
+    return_all_data=False, refit_data=True):
     """Sync video with behavioral file
     
     Uses decrements in luminance and the backlight signal to do the sync.
@@ -652,7 +654,8 @@ def sync_video_with_behavior(bfile, lums=None, video_file=None,
         parsed_df_by_trial, state1=1, show_warnings=True)
 
     # Find the fit
-    res = longest_unique_fit(v_onsets, backlight_times, return_all_data=True)    
+    res = longest_unique_fit(v_onsets, backlight_times, return_all_data=True,
+        refit_data=refit_data)    
     b2v_fit = res['best_fitpoly']
     
     if b2v_fit is None and error_if_no_fit:
@@ -663,7 +666,7 @@ def sync_video_with_behavior(bfile, lums=None, video_file=None,
         res['lums'] = lums
         res['video_flash_x'] = v_onsets
         res['behavior_flash_y'] = backlight_times
-        res['b2v_fit'] = res.pop('best_fitpoly')
+        res['b2v_fit'] = b2v_fit
         return res
     else:
         return b2v_fit
