@@ -170,61 +170,6 @@ def plot_by_training_stage_one_mouse(msessions, mchanges, ax=None,
     
     return ax
 
-def plot_weights(delta_days=20):
-    """Plot the weight over time.
-    
-    Returns: f, piv
-        f - Figure, one axis per cohort
-        piv - pivoted data with weight and date
-    """
-    cohorts = MCwatch.behavior.db.getstarted()['cohorts']
-    f, axa = plt.subplots(len(cohorts), 1, figsize=(7, 3.75 * len(cohorts)))
-
-    # Get training data
-    data = pandas.read_excel('/home/mouse/Documents/training_plan2.xls',
-        sheetname=1)
-    data = data[['Date', 'Mouse', 'Weight']]
-    data = data.ix[len(data)-500:]
-    
-    # Fill the dates
-    data['Date'] = data['Date'].fillna(method='ffill')
-
-    # Float the weights and drop junk
-    data['Weight'] = data['Weight'].convert_objects(convert_numeric=True)
-    data = data.dropna()
-    
-    # Pivot
-    piv = data.pivot_table(index='Date', columns='Mouse', values='Weight')
-    
-    # Delta_days
-    piv = piv.ix[piv.index[-delta_days:]]
-
-    for cohort, ax in zip(cohorts, axa):
-        cohort = [mouse for mouse in cohort if mouse in piv.columns]
-        ax.plot(piv[cohort], marker='s', ls='-')
-        ax.set_xlim((0, len(piv)))
-        ax.set_xticks(range(len(piv)))
-        labels = piv.index.format(formatter = lambda x: x.strftime('%m-%d'))
-        ax.set_xticklabels(labels, rotation=45, size='small')
-        ax.legend(cohort, loc='lower left', fontsize='small')
-        #~ ax.set_ylim((0, ax.get_ylim()[1]))
-    plt.show()
-    
-    return f, piv
-
-def status_check(delta_days=30):
-    """Run the daily status check"""
-    # For right now this same function checks for missing sessions, etc,
-    # but this should be broken out
-    cohorts = MCwatch.behavior.db.getstarted()['cohorts']
-    for cohort in cohorts:
-        plot_pivoted_performances(keep_mice=cohort, delta_days=delta_days)
-    
-    MCwatch.behavior.db_plot.display_perf_by_servo_from_day()
-    MCwatch.behavior.db_plot.display_perf_by_rig()
-    plt.show()
-
-
 def plot_logfile_check(logfile, state_names='original'):
     """Graphical debugging info about state transitions.
     

@@ -227,8 +227,6 @@ def calculate_perf_by_training_stage(partition_params=None, drop_inactive=True,
         change_table : DataFrame, boolean, where each entry reflects
             where the partition occurred for that parameter
     """
-    gets = getstarted()
-    
     if partition_params is None:
         partition_params = ['stimulus_set', 'scheduler', 'trim', 'board', 'box']
 
@@ -237,8 +235,10 @@ def calculate_perf_by_training_stage(partition_params=None, drop_inactive=True,
     
     # Drop non-active mice
     if drop_inactive:
+        active_mice = list(runner.models.Mouse.objects.filter(
+            in_training=True).values_list('name', flat=True))        
         session_table = session_table[
-            session_table.mouse.isin(gets['active_mice'])]
+            session_table.mouse.isin(active_mice)]
     
     # Drop old data
     if n_days_history is not None:
@@ -353,25 +353,6 @@ def get_paths():
         raise ValueError("unknown locale %s" % LOCALE)
     
     return PATHS
-
-def getstarted():
-    """Returns mice and active mice
-    
-    This information is extracted from the django database.
-    
-    Keys:
-        'mice' : list of all mice in the database
-        'active_mice' : all mice for which in_training is True
-    """
-    # Get mice for which "in_training" is True
-    res['active_mice'] = list(runner.models.Mouse.objects.filter(
-        in_training=True).values_list('name', flat=True))
-    
-    # Get all mice
-    res['mice'] = list(runner.models.Mouse.objects.values_list(
-        'name', flat=True))
-    
-    return res
 
 def check_ardulines(logfile):
     """Error check the log file.
@@ -1128,8 +1109,6 @@ def parse_behavior_filenames(all_behavior_files, clean=True):
     clean : if True, also clean up the mousenames by upcasing.
         Finally, drop the ones not in the official list of mice.
     """
-    gets = getstarted()
-    
     # Extract info from filename
     # directory, rigname, datestring, mouse
     # date (with hyphens) - mouse - board - box - saved
@@ -1188,8 +1167,10 @@ def parse_behavior_filenames(all_behavior_files, clean=True):
         behavior_files_df.mouse = behavior_files_df.mouse.apply(str.upper)
 
         # Drop any that are not in the list of accepted mouse names
+        all_mice = list(runner.models.Mouse.objects.values_list(
+            'name', flat=True))
         behavior_files_df = behavior_files_df.ix[
-            behavior_files_df.mouse.isin(gets['mice'])]
+            behavior_files_df.mouse.isin(all_mice)]
 
     # Add a session name based on the date and cleaned mouse name
     behavior_files_df['session'] = behavior_files_df['filename'].apply(
