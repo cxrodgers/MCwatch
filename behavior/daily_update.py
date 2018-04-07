@@ -30,9 +30,14 @@ def daily_update_behavior():
 
     # get new records
     PATHS = MCwatch.behavior.db.get_paths()
-    newly_added_bdf = MCwatch.behavior.db.search_for_behavior_files(
-        behavior_dir=PATHS['behavior_dir'],
-        clean=True)
+    
+    # Search for new behavior files
+    # TODO: put this path in PATHS
+    print "daily_update_behavior: searching for behavior files"
+    all_behavior_files = search_for_behavior_files('~/mnt/sandbox_root')
+
+    print "daily_update_behavior: parsing putative behavior files"
+    newly_added_bdf = parse_behavior_filenames(all_behavior_files, clean=True)    
     
     # concatenate all existing records with all records previously in
     # the database. for duplicates, keep the newly processed version
