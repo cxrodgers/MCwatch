@@ -904,24 +904,35 @@ def calculate_perf_by_rewside_and_servo_pos(trial_matrix):
     resdf['perf'] = resdf['nhits'] / resdf['ntots']
     return resdf
 
-def search_for_behavior_files(
-    behavior_dir='~/mnt/behave/runmice',
-    clean=True):
-    """Load behavior files into data frame.
+def search_for_behavior_files(sandbox_root_dir='~/mnt/sandbox_root'):
+    """Find and parse sandbox directories into DataFrame.
     
-    behavior_dir : where to look
-    clean : see parse_behavior_filenames
+    All directories matching the following glob are considered:
+        `sandbox_root_dir`/*/*/*/*-saved
     
-    See also search_for_behavior_and_video_files
+    Within each of those directories, the following glob is applied to
+    find an ardulines file:
+        Script/logfiles/ardulines.*
+    
+    If the directory does not contain exactly one ardulines files in
+    /Script/logfiles, then it is skipped with a warning.
+    
+    The resulting list of putative sandboxed ardulines files is returned.
+    
+
+    sandbox_root_dir : where to look for sandboxes
+        This should have an experimenter/year/month/files format
+
+    
+    Returns : A list of putative ardulines files
+        This should then be passed to `parse_behavior_filenames`.
     """
     # expand path
-    behavior_dir = os.path.expanduser(behavior_dir)
+    sandbox_root_dir = os.path.expanduser(sandbox_root_dir)
     
-    # Acquire all behavior files in the subdirectories
-    # Find all saved sandboxes
-    # Then extract logfiles (and probably parameters / results) from each
-    # sandbox_name-saved/Script/logfiles/ardulines.*
-    saved_directories = sorted(glob.glob(os.path.join(behavior_dir, '*-saved')))
+    # Identify saved directories in the experimenter/year/month format
+    saved_directories = sorted(glob.glob(os.path.join(sandbox_root_dir, 
+        '*', '*', '*', '*-saved')))
     
     if len(saved_directories) == 0:
         print "warning: no saved directories in %s" % behavior_dir
@@ -929,13 +940,6 @@ def search_for_behavior_files(
     # Ensure there is only one saved ardulines for each
     all_behavior_files = []
     for sd in saved_directories:
-        # Skip if not TwoChoice or LickTrain
-        if not (
-            os.path.exists(os.path.join(sd, 'Script', 'TwoChoice.py')) or
-            os.path.exists(os.path.join(sd, 'Script', 'TwoChoiceJung.py')) or
-            os.path.exists(os.path.join(sd, 'Script', 'LickTrain.py'))):
-            continue
-        
         # Find unique logfile in that directory
         logfiles = glob.glob(os.path.join(sd, 'Script', 'logfiles', 'ardulines.*'))
         if len(logfiles) == 0:
@@ -948,14 +952,7 @@ def search_for_behavior_files(
             all_behavior_files.append(logfiles[0])
     
     # Parse out metadata for each
-    behavior_files_df = parse_behavior_filenames(all_behavior_files, 
-        clean=clean)    
-    
-    # Sort and reindex
-    behavior_files_df = behavior_files_df.sort_values(by='dt_start')
-    behavior_files_df.index = range(len(behavior_files_df))
-    
-    return behavior_files_df
+    return all_behavior_files
 
 def search_for_behavior_and_video_files(
     behavior_dir='~/mnt/behave/runmice',
@@ -1103,23 +1100,101 @@ def find_best_overlap_video(behavior_files_df, video_files_df,
 def parse_behavior_filenames(all_behavior_files, clean=True):
     """Given list of ardulines files, extract metadata and return as df.
     
-    Each filename is matched to a pattern which is used to extract the
-    rigname, date, and mouse name. Non-matching filenames are discarded.
+    Files that do not match the expected EYM pattern will be silently
+    discarded:
+      any_prefix/experimenter/year/month/
+      year-month-day-hour-minute-sec-mouse-board-box-saved/
+      Script/logfiles/ardulines.datetimestring
     
-    clean : if True, also clean up the mousenames by upcasing.
-        Finally, drop the ones not in the official list of mice.
+    Metadata is extracted from the the filename, the files in the directory,
+    and the times of the files. Each piece of metadata becomes a column
+    in the returned DataFrame.
+    
+    The following parameters are extracted from the filename:
+        'rig' : box
+        'mouse' : mouse name
+    
+    The following are extacted from the json parameters file:
+        'stimulus_set' : with an '_r' appended (hack)
+    
+    The following are extracted from the times of the behavior file
+        'dt_start' : time string in the ardulines filename
+        'dt_end' : modification time of the ardulines file
+        'duration' : difference between the above
+        
+    This is based on which pyfile is in the directory:
+        'protocol'
+    Currently, only LickTrain, TwoChoice, and TwoChoiceJung are recognized.
+    If none of these are present, the directory is skipped.
+    
+    The filename itself is store in:
+        'filename'
+
+    The session name is created by concatenating the ardulines
+    date time string with '.' and the mouse name. This is stored in:
+        'session'
+    
+    Finally, the DataFrame is sorted by dt_start.
+    
+    
+    Parameters
+    ----------
+    all_behavior_filenames : list of ardulines files
+        Any unsaved sandboxes will be silently discarded
+    
+    clean : bool
+        If True, upcase the mouse names and drop any that are not in 
+        the the runner db.
+    
+    
+    Returns: DataFrame
+        With the columns described above.
     """
-    # Extract info from filename
-    # directory, rigname, datestring, mouse
-    # date (with hyphens) - mouse - board - box - saved
-    pattern = '(\S+)-(\S+)-(\S+)-(\S+)-saved/Script/logfiles/ardulines\.(\d+)'
+    ## Form the regex pattern
+    # The expected pattern is as follows:
+    #   any_prefix/experimenter/year/month/
+    #   year-month-day-hour-minute-sec-mouse-board-box-saved/
+    #   Script/logfiles/ardulines.datetimestring
+    # They are date string, metadata, and "-saved"
+    # Then there is a path to the ardulines file within it
+    pattern = ''
+    
+    # prefix, ending in "/"
+    pattern += '(\S+)/'
+    
+    # experimenter (exclude "/" so we don't get the prefix)
+    pattern += '(\S[^-/]+)' + '/'
+    
+    # year and month as subdirectories
+    pattern += '(\d[^-]+)' + '/' + '(\d[^-]+)' + '/'
+    
+    # 6 numerics for date string
+    # Each group explicitly excludes "-" to enforce the splitting
+    pattern += '-'.join(['(\d[^-]+)'] * 6)
+
+    # 3 alphanumerics for mouse, board, box
+    pattern += '-' + '-'.join(['(\S[^-]+)'] * 3)
+
+    # saved group is required
+    pattern += "-saved"
+    
+    # ardulines filename at the end
+    pattern += "/Script/logfiles/ardulines\.(\d+)$"
+
+    
+    ## Iterate over filenames
     rec_l = []
     for filename in all_behavior_files:
         # Match filename pattern
         m = re.match(pattern, os.path.abspath(filename))
         if m is not None:
-            sandbox_date_s, mouse, board, box, ardulines_date_s = m.groups()
-
+            # Parse out groups
+            # experimenter, mouse, board, box, ardulines file time are strings
+            groups = m.groups()
+            experimenter = groups[1]
+            mouse, board, box = groups[10:13]
+            ardulines_date_s = groups[13]
+            
             # The start time is parsed from the filename
             date = datetime.datetime.strptime(ardulines_date_s, '%Y%m%d%H%M%S')
             
@@ -1131,7 +1206,11 @@ def parse_behavior_filenames(all_behavior_files, clean=True):
             json_file = os.path.normpath(
                 os.path.join(filename, '../../parameters.json'))
             with file(json_file) as fi:
-                params = json.load(fi)
+                try:
+                    params = json.load(fi)
+                except IOError:
+                    print "warning: skipping bad json file in %s" % filename
+                    continue
             stimulus_set = params.get('stimulus_set', '')
             
             # Hack, because right now all rigs are using reversed, but
@@ -1149,7 +1228,8 @@ def parse_behavior_filenames(all_behavior_files, clean=True):
             elif 'LickTrain.py' in script_files:
                 protocol = 'LickTrain'
             else:
-                protocol = ''
+                print "warning: skipping unrecognized protocol in %s" % filename
+                continue
             
             # Store
             rec_l.append({'rig': box, 'mouse': mouse,
@@ -1157,26 +1237,32 @@ def parse_behavior_filenames(all_behavior_files, clean=True):
                 'duration': behavior_end_time - date,
                 'protocol': protocol, 'stimulus_set': stimulus_set,
                 'filename': filename})
+
+    # DataFrame it
     behavior_files_df = pandas.DataFrame.from_records(rec_l)
 
     if len(behavior_files_df) == 0:
         raise IOError("no behavior files found")
 
-    elif clean:
+    if clean:
         # Clean the behavior files by upcasing
         behavior_files_df.mouse = behavior_files_df.mouse.apply(str.upper)
 
         # Drop any that are not in the list of accepted mouse names
         all_mice = list(runner.models.Mouse.objects.values_list(
             'name', flat=True))
-        behavior_files_df = behavior_files_df.ix[
-            behavior_files_df.mouse.isin(all_mice)]
+        behavior_files_df = behavior_files_df.loc[
+            behavior_files_df.mouse.isin(all_mice), :].copy()
 
     # Add a session name based on the date and cleaned mouse name
     behavior_files_df['session'] = behavior_files_df['filename'].apply(
         lambda s: os.path.split(s)[1].split('.')[1]) + \
         '.' + behavior_files_df['mouse']
 
+    # Sort and reindex
+    behavior_files_df = behavior_files_df.sort_values(by='dt_start')
+    behavior_files_df.index = range(len(behavior_files_df))
+    
     return behavior_files_df
 
 def parse_video_filenames(video_filenames, verbose=False, 
