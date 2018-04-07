@@ -979,6 +979,7 @@ def search_for_behavior_and_video_files(
     video_dir = os.path.expanduser(video_dir)
 
     # Search for behavior files
+    1/0 # this needs to be updated
     behavior_files_df = search_for_behavior_files(behavior_dir)
 
     # Acquire all video files
