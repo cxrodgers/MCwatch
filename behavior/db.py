@@ -305,7 +305,7 @@ def get_paths():
         PATHS = {
             'database_root': '/home/jack/mnt/nas2_home/behavior/behavior_db',
             'presandbox_behavior_dir': '/home/jack/mnt/nas2_home/behavior/runmice',
-            'behavior_dir': '/home/jack/mnt/nas2_home/behavior/sandbox_root',
+            'behavior_dir': '/home/jack/mnt/sandbox_root',
             'video_dir': '/home/jack/mnt/nas2_home/ps3eye/marvin/compressed_eye',
             }
 
@@ -904,7 +904,7 @@ def calculate_perf_by_rewside_and_servo_pos(trial_matrix):
     resdf['perf'] = resdf['nhits'] / resdf['ntots']
     return resdf
 
-def search_for_sandboxes(sandbox_root_dir='~/mnt/sandbox_root'):
+def search_for_sandboxes(sandbox_root_dir=None):
     """Return list of putative sandbox directories
     
     Putative sandbox directories are those matching the expected format:
@@ -912,9 +912,15 @@ def search_for_sandboxes(sandbox_root_dir='~/mnt/sandbox_root'):
     
     No additional processing is done because that takes too long.
     
+    sandbox_root_dir : path to search for sandboxes
+        If None, use get_paths()['behavior_dir']
+    
     Returns: list of putative sandbox directories
     """
     # expand path
+    if sandbox_root_dir is None:
+        PATHS = get_paths()
+        sandbox_root_dir = PATHS['behavior_dir']
     sandbox_root_dir = os.path.expanduser(sandbox_root_dir)
     
     # Identify saved directories in the experimenter/year/month format

@@ -26,10 +26,16 @@ def daily_update():
 def daily_update_behavior(force_reparse=False):
     """Update behavior database
     
-    Identifies all sandboxes in the sandbox root directory.
-    Discards ones that are already in the behavior CSV file.
-    Parses the new ones.
-    Concatenates onto the existing behavior CSV file.
+    Identifies all sandboxes in the sandbox root directory. Parses them and
+    adds to the behavior CSV file.
+    
+    force_reparse : bool
+        If True, always reparse every discovered sandbox, and drop any
+        duplicates after concatenating with existing behavior CSV file.
+        
+        If False, discard sandboxes that are already in the behavior CSV
+        file, and error if there somehow are duplicates in the concatenated
+        CSV file.
     """
     print "daily_update_behavior: start"
     
@@ -39,18 +45,17 @@ def daily_update_behavior(force_reparse=False):
     # get new records
     PATHS = MCwatch.behavior.db.get_paths()
 
-    # Temporarily for debugging, the PATH is different
-    temporary_sandbox_root = os.path.expanduser('~/mnt/sandbox_root')
-
     # Extract sandbox
     current_bdf['sandbox'] = current_bdf['filename'].apply(
         lambda s: s.split(os.sep)[-4])
     current_bdf.loc[current_bdf['sandbox'] == 'runmice', 'sandbox'] = np.nan
 
+    #~ # Delete the last few for testing
+    #~ current_bdf = current_bdf.loc[current_bdf.index[:-50]]
+
     # Search for new sandboxes
     # TODO: replace this with PATHS
-    discovered_sandboxes = MCwatch.behavior.db.search_for_sandboxes(
-        temporary_sandbox_root)
+    discovered_sandboxes = MCwatch.behavior.db.search_for_sandboxes()
     print "info: discovered %d sandboxes" % len(discovered_sandboxes)
 
     # Identify which need to be parsed
@@ -92,20 +97,11 @@ def daily_update_behavior(force_reparse=False):
         new_bdf_copy = new_bdf.copy()
 
         # delocale-ify
-        # We have to delocale-ify both the OLD and NEW behavior_dir, until
-        # the OLD one is gone
         new_bdf['filename'] = new_bdf['filename'].str.replace(
             PATHS['behavior_dir'], '$behavior_dir$')
         new_bdf['filename'] = new_bdf['filename'].str.replace(
-            temporary_sandbox_root, '$behavior_dir$')
-        new_bdf['filename'] = new_bdf['filename'].str.replace(
             PATHS['presandbox_behavior_dir'], '$presandbox_behavior_dir$')        
 
-        # Check that everything has been delocale-ified here
-        # There are a few that weren't, and it's because they don't exist anymore,
-        # so I manually deleted from behavior.csv
-        assert (new_bdf['filename'].apply(lambda s: s[0]) == '$').all()
-    
         # save
         filename = os.path.join(PATHS['database_root'], 'behavior.csv')
         new_bdf.to_csv(filename, index=False)
