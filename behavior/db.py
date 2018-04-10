@@ -293,36 +293,28 @@ def get_locale():
 def get_paths():
     """Return the data directories on this locale"""
     LOCALE = get_locale()
-    if LOCALE == 'chris-pyramid':
+    if LOCALE == 'gamma':
         PATHS = {
-            'database_root': '/home/chris/mnt/nas2_home/behavior/behavior_db',
-            'presandbox_behavior_dir': '/home/chris/mnt/nas2_home/behavior/runmice',
-            'behavior_dir': '/home/chris/mnt/nas2_home/behavior/sandbox_root',
-            'video_dir': '/home/chris/mnt/nas2_home/ps3eye/marvin/compressed_eye',
-            }
-
-    elif LOCALE == 'gamma':
-        PATHS = {
-            'database_root': '/home/jack/mnt/nas2_home/behavior/behavior_db',
-            'presandbox_behavior_dir': '/home/jack/mnt/nas2_home/behavior/runmice',
-            'behavior_dir': '/home/jack/mnt/sandbox_root',
-            'video_dir': '/home/jack/mnt/nas2_home/ps3eye/marvin/compressed_eye',
+            'database_root': '/mnt/behavior/behavior_db',
+            'presandbox_behavior_dir': '/mnt/behavior/runmice',
+            'behavior_dir': '/mnt/behavior/sandbox_root',
+            'video_dir': '/mnt/behavior/ps3eye/marvin/compressed_eye',
             }
 
     elif LOCALE == 'marvin':
         PATHS = {
-            'database_root': '/home/mouse/mnt/nas2_home/behavior/behavior_db',
-            'presandbox_behavior_dir': '/home/mouse/mnt/nas2_home/behavior/runmice',
-            'behavior_dir': '/mnt/sandbox_root',
-            'video_dir': '/home/mouse/mnt/nas2_home/ps3eye/marvin/compressed_eye',
+            'database_root': '/mnt/behavior/behavior_db',
+            'presandbox_behavior_dir': '/mnt/behavior/runmice',
+            'behavior_dir': '/mnt/behavior/sandbox_root',
+            'video_dir': '/mnt/behavior/ps3eye/marvin/compressed_eye',
             }
 
     elif LOCALE == 'texture':
         PATHS = {
-            'database_root': '/mnt/nas2_home/behavior/behavior_db',
-            'presandbox_behavior_dir': '/mnt/nas2_home/behavior/runmice',
-            'behavior_dir': '/mnt/nas2_home/behavior/sandbox_root',
-            'video_dir': '/mnt/nas2_home/ps3eye/texture/compressed_eye',
+            'database_root': '/mnt/behavior/behavior_db',
+            'presandbox_behavior_dir': '/mnt/behavior/runmice',
+            'behavior_dir': '/mnt/behavior/sandbox_root',
+            'video_dir': '/mnt/behavior/ps3eye/texture/compressed_eye',
             }
 
     elif LOCALE == 'nivram':
