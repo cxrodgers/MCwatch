@@ -313,7 +313,7 @@ def get_paths():
         PATHS = {
             'database_root': '/home/mouse/mnt/nas2_home/behavior/behavior_db',
             'presandbox_behavior_dir': '/home/mouse/mnt/nas2_home/behavior/runmice',
-            'behavior_dir': '/home/mouse/mnt/nas2_home/behavior/sandbox_root',
+            'behavior_dir': '/mnt/sandbox_root',
             'video_dir': '/home/mouse/mnt/nas2_home/ps3eye/marvin/compressed_eye',
             }
 
