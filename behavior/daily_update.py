@@ -23,46 +23,94 @@ def daily_update():
     daily_update_trial_matrix()
     daily_update_perf_metrics()
 
-def daily_update_behavior():
-    """Update behavior database"""
+def daily_update_behavior(force_reparse=False):
+    """Update behavior database
+    
+    Identifies all sandboxes in the sandbox root directory.
+    Discards ones that are already in the behavior CSV file.
+    Parses the new ones.
+    Concatenates onto the existing behavior CSV file.
+    """
+    print "daily_update_behavior: start"
+    
     # load the current database
     current_bdf = MCwatch.behavior.db.get_behavior_df()
 
     # get new records
     PATHS = MCwatch.behavior.db.get_paths()
-    
-    # Search for new behavior files
-    # TODO: put this path in PATHS
-    print "daily_update_behavior: searching for behavior files"
-    all_behavior_files = search_for_behavior_files('~/mnt/sandbox_root')
 
-    print "daily_update_behavior: parsing putative behavior files"
-    newly_added_bdf = parse_behavior_filenames(all_behavior_files, clean=True)    
-    
-    # concatenate all existing records with all records previously in
-    # the database. for duplicates, keep the newly processed version
-    concatted = pandas.concat([current_bdf, newly_added_bdf],
-        ignore_index=True, verify_integrity=True)
-    new_bdf = concatted.drop_duplicates(subset='session',
-        keep='last').reset_index(drop=True)
+    # Temporarily for debugging, the PATH is different
+    temporary_sandbox_root = os.path.expanduser('~/mnt/sandbox_root')
 
-    # store copy for error check
-    new_bdf_copy = new_bdf.copy()
+    # Extract sandbox
+    current_bdf['sandbox'] = current_bdf['filename'].apply(
+        lambda s: s.split(os.sep)[-4])
+    current_bdf.loc[current_bdf['sandbox'] == 'runmice', 'sandbox'] = np.nan
+
+    # Search for new sandboxes
+    # TODO: replace this with PATHS
+    discovered_sandboxes = MCwatch.behavior.db.search_for_sandboxes(
+        temporary_sandbox_root)
+    print "info: discovered %d sandboxes" % len(discovered_sandboxes)
+
+    # Identify which need to be parsed
+    if force_reparse:
+        # Reparse all
+        new_sandboxes = discovered_sandboxes
+    else:
+        # Reparse new only
+        new_sandboxes = discovered_sandboxes.loc[
+            ~discovered_sandboxes['sandbox_name'].isin(
+            current_bdf['sandbox']), :]
+
+    # Parse the new sandboxes
+    newly_added_bdf = MCwatch.behavior.db.parse_sandboxes(new_sandboxes)
+    if newly_added_bdf is None:
+        print "info: no new sandboxes found"
+    else:
+        print "info: parsed %d new sandboxes" % len(newly_added_bdf)
+
+        # Concatenate known and new
+        new_bdf = pandas.concat([current_bdf, newly_added_bdf],
+            ignore_index=True)
+        
+        # Deal with duplicates
+        if force_reparse:
+            # Drop the duplicates
+            new_bdf = new_bdf.drop_duplicates(subset='session', 
+                keep='last').reset_index(drop=True)
+        
+        else:
+            # Error check: there should be no duplicated sessions
+            if new_bdf['session'].duplicated().any():
+                dup_mask = new_bdf['session'].duplicated()
+                dup_sessions = new_bdf.loc[dup_mask, 'session'].values
+                raise ValueError("duplicate sessions after concatenating: %r" % 
+                    dup_sessions)
+
+        # store copy for error check
+        new_bdf_copy = new_bdf.copy()
+
+        # delocale-ify
+        # We have to delocale-ify both the OLD and NEW behavior_dir, until
+        # the OLD one is gone
+        new_bdf['filename'] = new_bdf['filename'].str.replace(
+            PATHS['behavior_dir'], '$behavior_dir$')
+        new_bdf['filename'] = new_bdf['filename'].str.replace(
+            temporary_sandbox_root, '$behavior_dir$')
+        new_bdf['filename'] = new_bdf['filename'].str.replace(
+            PATHS['presandbox_behavior_dir'], '$presandbox_behavior_dir$')        
+
+        # Check that everything has been delocale-ified here
+        # There are a few that weren't, and it's because they don't exist anymore,
+        # so I manually deleted from behavior.csv
+        assert (new_bdf['filename'].apply(lambda s: s[0]) == '$').all()
     
-    # locale-ify
-    new_bdf['filename'] = new_bdf['filename'].str.replace(
-        PATHS['behavior_dir'], '$behavior_dir$')
-    new_bdf['filename'] = new_bdf['filename'].str.replace(
-        PATHS['presandbox_behavior_dir'], '$presandbox_behavior_dir$')        
+        # save
+        filename = os.path.join(PATHS['database_root'], 'behavior.csv')
+        new_bdf.to_csv(filename, index=False)
     
-    # save
-    filename = os.path.join(PATHS['database_root'], 'behavior.csv')
-    new_bdf.to_csv(filename, index=False)
-    
-    # Test the reading/writing is working
-    bdf_reloaded = MCwatch.behavior.db.get_behavior_df()
-    if not (new_bdf_copy == bdf_reloaded).all().all():
-        raise ValueError("read/write error in behavior database")
+    print "daily_update_behavior: done"
     
 def daily_update_video():
     """Update video database

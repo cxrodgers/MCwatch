@@ -904,55 +904,46 @@ def calculate_perf_by_rewside_and_servo_pos(trial_matrix):
     resdf['perf'] = resdf['nhits'] / resdf['ntots']
     return resdf
 
-def search_for_behavior_files(sandbox_root_dir='~/mnt/sandbox_root'):
-    """Find and parse sandbox directories into DataFrame.
+def search_for_sandboxes(sandbox_root_dir='~/mnt/sandbox_root'):
+    """Return list of putative sandbox directories
     
-    All directories matching the following glob are considered:
-        `sandbox_root_dir`/*/*/*/*-saved
+    Putative sandbox directories are those matching the expected format:
+      */*/*/*-saved/
     
-    Within each of those directories, the following glob is applied to
-    find an ardulines file:
-        Script/logfiles/ardulines.*
+    No additional processing is done because that takes too long.
     
-    If the directory does not contain exactly one ardulines files in
-    /Script/logfiles, then it is skipped with a warning.
-    
-    The resulting list of putative sandboxed ardulines files is returned.
-    
-
-    sandbox_root_dir : where to look for sandboxes
-        This should have an experimenter/year/month/files format
-
-    
-    Returns : A list of putative ardulines files
-        This should then be passed to `parse_behavior_filenames`.
+    Returns: list of putative sandbox directories
     """
     # expand path
     sandbox_root_dir = os.path.expanduser(sandbox_root_dir)
     
     # Identify saved directories in the experimenter/year/month format
     saved_directories = sorted(glob.glob(os.path.join(sandbox_root_dir, 
-        '*', '*', '*', '*-saved')))
-    
+        '*', '*', '*', '*-saved/')))
+
+    # Warn if no results
     if len(saved_directories) == 0:
-        print "warning: no saved directories in %s" % behavior_dir
+        print "warning: no saved directories in %s" % sandbox_root_dir
     
-    # Ensure there is only one saved ardulines for each
-    all_behavior_files = []
+    # Clean each
+    rec_l = []
     for sd in saved_directories:
-        # Find unique logfile in that directory
-        logfiles = glob.glob(os.path.join(sd, 'Script', 'logfiles', 'ardulines.*'))
-        if len(logfiles) == 0:
-            print "warning: cannot find logfile in %s" % sd
-            continue
-        elif len(logfiles) > 1:
-            print "warning: non-unique logfiles in %s, skipping" % sd
-            continue
-        else:
-            all_behavior_files.append(logfiles[0])
+        # Clean
+        cleaned_sd = os.path.abspath(sd)
+        
+        # Break off the sandbox
+        sandbox_name = os.path.split(cleaned_sd)[1]
+        
+        # Store
+        rec_l.append({
+            'sandbox_name': sandbox_name,
+            'sandbox_dir': cleaned_sd,
+        })
     
-    # Parse out metadata for each
-    return all_behavior_files
+    # DataFrame
+    res = pandas.DataFrame.from_records(rec_l)
+    
+    return res
 
 def search_for_behavior_and_video_files(
     behavior_dir='~/mnt/behave/runmice',
@@ -1098,8 +1089,8 @@ def find_best_overlap_video(behavior_files_df, video_files_df,
 
     return new_sbvdf
 
-def parse_behavior_filenames(all_behavior_files, clean=True):
-    """Given list of ardulines files, extract metadata and return as df.
+def parse_sandboxes(sandboxes, clean=True):
+    """Given list of sandboxes, extract metadata and return as df.
     
     Files that do not match the expected EYM pattern will be silently
     discarded:
@@ -1140,18 +1131,19 @@ def parse_behavior_filenames(all_behavior_files, clean=True):
     
     Parameters
     ----------
-    all_behavior_filenames : list of ardulines files
-        Any unsaved sandboxes will be silently discarded
+    sandboxes : DataFrame of putative sandboxes
+        This should have columns 'sandbox_dir' and 'sandbox_name'
+        Any sandboxes that do not contain exactly one ardulines file or
+        do not match the expected format will be skipped.
     
     clean : bool
         If True, upcase the mouse names and drop any that are not in 
         the the runner db.
-    
-    
+
     Returns: DataFrame
         With the columns described above.
     """
-    ## Form the regex pattern
+
     # The expected pattern is as follows:
     #   any_prefix/experimenter/year/month/
     #   year-month-day-hour-minute-sec-mouse-board-box-saved/
@@ -1181,13 +1173,28 @@ def parse_behavior_filenames(all_behavior_files, clean=True):
     
     # ardulines filename at the end
     pattern += "/Script/logfiles/ardulines\.(\d+)$"
-
     
-    ## Iterate over filenames
+    
     rec_l = []
-    for filename in all_behavior_files:
+    for idx, (sandbox_dir, sandbox_name) in sandboxes.iterrows():
+        # Determine if it contains exactly one ardulines file
+        ardulines_files = glob.glob(os.path.join(sandbox_dir,
+            'Script', 'logfiles', 'ardulines.*'))
+        
+        # Skip if non-unique
+        if len(ardulines_files) == 0:
+            print "warning: no ardulines in %s" % sandbox_dir
+            continue
+        
+        if len(ardulines_files) > 1:
+            print "warning: multiple ardulines in %s" % sandbox_dir
+            continue
+        
+        # Get ardulines filename
+        ardulines_filename = ardulines_files[0]
+
         # Match filename pattern
-        m = re.match(pattern, os.path.abspath(filename))
+        m = re.match(pattern, os.path.abspath(ardulines_filename))
         if m is not None:
             # Parse out groups
             # experimenter, mouse, board, box, ardulines file time are strings
@@ -1200,17 +1207,19 @@ def parse_behavior_filenames(all_behavior_files, clean=True):
             date = datetime.datetime.strptime(ardulines_date_s, '%Y%m%d%H%M%S')
             
             # The end time is parsed from the file timestamp
+            # This line takes half the total running time
             behavior_end_time = datetime.datetime.fromtimestamp(
-                my.misc.get_file_time(filename))
+                my.misc.get_file_time(ardulines_filename))
+            duration = behavior_end_time - date
             
             # Get the stimulus set
             json_file = os.path.normpath(
-                os.path.join(filename, '../../parameters.json'))
+                os.path.join(ardulines_filename, '../../parameters.json'))
             with file(json_file) as fi:
                 try:
                     params = json.load(fi)
                 except IOError:
-                    print "warning: skipping bad json file in %s" % filename
+                    print "warning: skipping bad json file: %s" % json_file
                     continue
             stimulus_set = params.get('stimulus_set', '')
             
@@ -1221,6 +1230,7 @@ def parse_behavior_filenames(all_behavior_files, clean=True):
             
             # Get the protocol name
             # Not stored as a param, have to get it from the script name
+            # This line take 25% of the total running time
             script_files = os.listdir(os.path.split(json_file)[0])
             if 'TwoChoice.py' in script_files:
                 protocol = 'TwoChoice'
@@ -1229,21 +1239,23 @@ def parse_behavior_filenames(all_behavior_files, clean=True):
             elif 'LickTrain.py' in script_files:
                 protocol = 'LickTrain'
             else:
-                print "warning: skipping unrecognized protocol in %s" % filename
+                print "warning: skipping unrecognized protocol in %s" % (
+                    ardulines_filename)
                 continue
             
             # Store
             rec_l.append({'rig': box, 'mouse': mouse,
                 'dt_start': date, 'dt_end': behavior_end_time,
-                'duration': behavior_end_time - date,
+                'duration': duration,
                 'protocol': protocol, 'stimulus_set': stimulus_set,
-                'filename': filename})
+                'filename': ardulines_filename,
+                'sandbox': sandbox_name,})
 
     # DataFrame it
     behavior_files_df = pandas.DataFrame.from_records(rec_l)
-
+    
     if len(behavior_files_df) == 0:
-        raise IOError("no behavior files found")
+        return None
 
     if clean:
         # Clean the behavior files by upcasing
