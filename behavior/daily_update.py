@@ -191,19 +191,24 @@ def daily_update_trial_matrix(start_date=None, verbose=False):
         behavior_files_df = behavior_files_df[ 
             behavior_files_df.dt_start >= start_date]
     
+    # List of existing trial matrix
+    existing_list = os.listdir(os.path.join(PATHS['database_root'],
+        'trial_matrix'))
+    
+    # Only process new ones
+    new_bdf = behavior_files_df.loc[~behavior_files_df['session'].isin(
+        existing_list)]
+    
     # Calculate trial_matrix for each
     session2trial_matrix = {}
-    for irow, row in behavior_files_df.iterrows():
-        # Check if it already exists
+    for irow, row in new_bdf.iterrows():
+        # Form filename
         filename = os.path.join(PATHS['database_root'], 'trial_matrix', 
             row['session'])
-        if os.path.exists(filename):
-            continue
-
         if verbose:
             print filename
 
-        # Otherwise make it
+        # Make it
         trial_matrix = TrialMatrix.make_trial_matrix_from_file(row['filename'])
         
         # And store it
