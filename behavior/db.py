@@ -319,26 +319,26 @@ def get_paths():
 
     elif LOCALE == 'nivram':
         PATHS = {
-            'database_root': '/home/chris/mnt/nas2_home/behavior/behavior_db',
-            'presandbox_behavior_dir': '/home/chris/mnt/nas2_home/behavior/runmice',
-            'behavior_dir': '/home/chris/mnt/nas2_home/behavior/sandbox_root',
-            'video_dir': '/home/chris/mnt/nas2_home/ps3eye/marvin/compressed_eye',
+            'database_root': '/mnt/behavior/behavior_db',
+            'presandbox_behavior_dir': '/mnt/behavior/runmice',
+            'behavior_dir': '/mnt/behavior/sandbox_root',
+            'video_dir': '/mnt/behavior/ps3eye/texture/compressed_eye',
             }
 
     elif LOCALE == 'lumps' or LOCALE == 'lumpy':
         PATHS = {
-            'database_root': '/home/jack/mnt/nas2_home/behavior/behavior_db',
-            'presandbox_behavior_dir': '/home/jack/mnt/nas2_home/behavior/runmice',
-            'behavior_dir': '/home/jack/mnt/nas2_home/behavior/sandbox_root',
-            'video_dir': '/home/jack/mnt/nas2_home/ps3eye/marvin/compressed_eye',
+            'database_root': '/mnt/behavior/behavior_db',
+            'presandbox_behavior_dir': '/mnt/behavior/runmice',
+            'behavior_dir': '/mnt/behavior/sandbox_root',
+            'video_dir': '/mnt/behavior/ps3eye/texture/compressed_eye',
             }
 
     elif LOCALE == 'xps':
         PATHS = {
-            'database_root': '/home/jack/mnt/nas2_home/behavior/behavior_db',
-            'presandbox_behavior_dir': '/home/jack/mnt/nas2_home/behavior/runmice',
-            'behavior_dir': '/home/jack/mnt/nas2_home/behavior/sandbox_root',
-            'video_dir': '/home/jack/mnt/nas2_home/ps3eye/marvin/compressed_eye',
+            'database_root': '/mnt/behavior/behavior_db',
+            'presandbox_behavior_dir': '/mnt/behavior/runmice',
+            'behavior_dir': '/mnt/behavior/sandbox_root',
+            'video_dir': '/mnt/behavior/ps3eye/texture/compressed_eye',
             }
 
     else:
