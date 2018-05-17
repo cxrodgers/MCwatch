@@ -290,11 +290,12 @@ def get_light_times_from_behavior_file(trial_matrix):
     
     Okay, so just return 'start_time'. Keep this function for consistency.
     
-    Returns: time that the backlight turned off on each trial
+    Returns: array
+        time that the backlight turned off on each trial
     """
     if not hasattr(trial_matrix, 'columns'):
         raise ValueError("provide trial matrix, not bfile")
-    return trial_matrix['start_time']
+    return trial_matrix['start_time'].values
 
 def refit_to_maximum_overlap(xdata, ydata, fitdata):
     """Refit results from longest_unique_fit to max window
@@ -555,6 +556,7 @@ def sync_video_with_behavior(trial_matrix, lums=None, video_file=None,
     error_if_no_fit : if True and no fit is found, raises Exception
     verbose : passed to process_chunks_of_video to print out frame
         number for each chunk
+        And also sent to longest_unique_fit
     
     See MCwatch.behavior.syncing.extract_onsets_and_durations for details on
     light_delta, diffsize, and refrac.
@@ -589,7 +591,7 @@ def sync_video_with_behavior(trial_matrix, lums=None, video_file=None,
 
     # Find the fit
     res = longest_unique_fit(v_onsets, backlight_times, return_all_data=True,
-        refit_data=refit_data)    
+        refit_data=refit_data, verbose=verbose)    
     b2v_fit = res['best_fitpoly']
     
     if b2v_fit is None and error_if_no_fit:
