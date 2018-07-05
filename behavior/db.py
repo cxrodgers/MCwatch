@@ -1234,6 +1234,8 @@ def parse_sandboxes(sandboxes, clean=True):
                 protocol = 'TwoChoice'
             elif 'TwoChoiceJung.py' in script_files:
                 protocol = 'TwoChoiceJung'
+            elif 'TwoChoiceJungLight.py' in script_files:
+                protocol = 'TwoChoiceJungLight'
             elif 'LickTrain.py' in script_files:
                 protocol = 'LickTrain'
             else:
