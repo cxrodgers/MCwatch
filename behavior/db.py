@@ -425,6 +425,9 @@ def get_trial_matrix(session, add_rwin_and_choice_times=False):
     filename = os.path.join(PATHS['database_root'], 'trial_matrix', session)
     res = pandas.read_csv(filename)
     
+    # This wasn't set properly at the time of generation
+    res.index.name = 'trial'
+    
     if add_rwin_and_choice_times:
         # Get the behavior filename
         bdf = get_behavior_df()
