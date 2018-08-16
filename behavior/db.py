@@ -425,8 +425,10 @@ def get_trial_matrix(session, add_rwin_and_choice_times=False):
     filename = os.path.join(PATHS['database_root'], 'trial_matrix', session)
     res = pandas.read_csv(filename)
     
-    # This wasn't set properly at the time of generation
-    res.index.name = 'trial'
+    # The 'trial' column *should* always be suitable as an index
+    # Unless something went wrong?
+    res = res.set_index('trial')
+    assert (res.index.values == np.arange(len(res), dtype=np.int)).all()
     
     if add_rwin_and_choice_times:
         # Get the behavior filename
