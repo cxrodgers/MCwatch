@@ -464,6 +464,10 @@ def longest_unique_fit(xdata, ydata, start_fitlen=3, ss_thresh=.0003,
         last_good_fitlen = fitlen
         fitlen = fitlen + 1    
     
+    # Always return None if no fit found
+    if best_fitpoly is None:
+        return None
+    
     if return_all_data:
         # Store results in dict
         fitdata = {
@@ -590,19 +594,31 @@ def sync_video_with_behavior(trial_matrix, lums=None, video_file=None,
     backlight_times = get_light_times_from_behavior_file(trial_matrix)
 
     # Find the fit
+    # This will be None if no fit found
     res = longest_unique_fit(v_onsets, backlight_times, return_all_data=True,
         refit_data=refit_data, verbose=verbose)    
-    b2v_fit = res['best_fitpoly']
     
-    if b2v_fit is None and error_if_no_fit:
+    if res is None and error_if_no_fit:
         raise ValueError("no fit found")
     
     if return_all_data:
         # Add some more stuff to res and return
+        if res is None:
+            res = {}
+            res['best_fitpoly'] = None
+
+        # Rename this one for clarity
+        res['b2v_fit'] = res['best_fitpoly']
+        
+        # Add in lums and other data sources for clarity
         res['lums'] = lums
         res['video_flash_x'] = v_onsets
         res['behavior_flash_y'] = backlight_times
-        res['b2v_fit'] = b2v_fit
+        
         return res
     else:
-        return b2v_fit
+        # Return just the fit, or None
+        if res is None:
+            return None
+        else:
+            return res['b2v_fit']
