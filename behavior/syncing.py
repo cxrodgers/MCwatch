@@ -539,8 +539,7 @@ def get_or_save_lums(session, lumdir=None, meth='gray', verbose=True,
     
     return lums
     
-def sync_video_with_behavior(trial_matrix, lums=None, video_file=None,
-    stop_after_frame=np.inf,
+def sync_video_with_behavior(trial_matrix, lums=None,
     light_delta=75, diffsize=2, refrac=50,
     assumed_fps=30., error_if_no_fit=False, verbose=False,
     return_all_data=False, refit_data=True):
@@ -554,9 +553,7 @@ def sync_video_with_behavior(trial_matrix, lums=None, video_file=None,
     And fits the behavior to the video based on that.
     
     bfile : behavior log, used to extract state change times
-    lums : luminances by frame, if pre-calculated
-    video_file : if lums is None, then calculates them using this
-        video_file
+    lums : luminances by frame
     error_if_no_fit : if True and no fit is found, raises Exception
     verbose : passed to process_chunks_of_video to print out frame
         number for each chunk
@@ -575,16 +572,8 @@ def sync_video_with_behavior(trial_matrix, lums=None, video_file=None,
     if not hasattr(trial_matrix, 'columns'):
         raise ValueError("must provide trial_matrix, not bfile")
     
-    # Get the mean luminances
-    # Would this be significantly faster if we spatially downsampled?
-    # Or used ffmpeg's native calculations?
-    if lums is None:
-        print "loading luminances ... this will take a while"    
-        lums = my.video.process_chunks_of_video(video_file, 
-            n_frames=stop_after_frame, verbose=verbose)
-
     # Get onsets and durations
-    onsets, durations = extract_onsets_and_durations(-lums, 
+    onsets, durations = extract_onsets_and_durations(-lums.values, 
         delta=light_delta, diffsize=diffsize, refrac=refrac)
 
     # Convert to seconds in the spurious timebase
@@ -611,7 +600,6 @@ def sync_video_with_behavior(trial_matrix, lums=None, video_file=None,
         res['b2v_fit'] = res['best_fitpoly']
         
         # Add in lums and other data sources for clarity
-        res['lums'] = lums
         res['video_flash_x'] = v_onsets
         res['behavior_flash_y'] = backlight_times
         
