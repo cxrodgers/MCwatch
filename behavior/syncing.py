@@ -144,7 +144,7 @@ def generate_mplayer_guesses_and_sync(metadata,
 
 ## Begin house light syncing
 def extract_onsets_and_durations(lums, delta=30, diffsize=3, refrac=5,
-    verbose=False):
+    verbose=False, maximum_duration=100):
     """Identify sudden, sustained increments in the signal `lums`.
     
     Algorithm
@@ -165,6 +165,7 @@ def extract_onsets_and_durations(lums, delta=30, diffsize=3, refrac=5,
     4.  Convert the onsets and offsets into onsets and durations. This is
         done with the function `extract duration of onsets2`. This discards
         any onset without a matching offset.
+    5.  Drop any matched onsets/offsets that exceed maximum_duration
     
     TODO: consider applying a boxcar of XXX frames first.
     
@@ -179,7 +180,7 @@ def extract_onsets_and_durations(lums, delta=30, diffsize=3, refrac=5,
     """
     # diff the sig over a period of diffsize
     diffsig = lums[diffsize:] - lums[:-diffsize]
-    
+
     # Threshold and account for the shift
     onsets = np.where(diffsig > delta)[0] + diffsize
     offsets = np.where(diffsig < -delta)[0] + diffsize
@@ -197,6 +198,12 @@ def extract_onsets_and_durations(lums, delta=30, diffsize=3, refrac=5,
     if verbose:
         print remaining_onsets
     
+    # apply maximum duration mask
+    if maximum_duration is not None:
+        max_dur_mask = durations <= maximum_duration
+        remaining_onsets = remaining_onsets[max_dur_mask].copy()
+        durations = durations[max_dur_mask].copy()
+
     return remaining_onsets, durations
     
 
@@ -589,7 +596,7 @@ def sync_video_with_behavior(trial_matrix, lums=None,
     
     if res is None and error_if_no_fit:
         raise ValueError("no fit found")
-    
+
     if return_all_data:
         # Add some more stuff to res and return
         if res is None:
