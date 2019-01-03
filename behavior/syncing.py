@@ -604,7 +604,10 @@ def sync_video_with_behavior(trial_matrix, lums=None,
             res['best_fitpoly'] = None
 
         # Rename this one for clarity
-        res['b2v_fit'] = res['best_fitpoly']
+        if refit_data:
+            res['b2v_fit'] = res['refit_best_poly']
+        else:
+            res['b2v_fit'] = res['best_fitpoly']
         
         # Add in lums and other data sources for clarity
         res['video_flash_x'] = v_onsets
