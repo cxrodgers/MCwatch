@@ -598,15 +598,22 @@ def sync_video_with_behavior(trial_matrix, lums=None,
         raise ValueError("no fit found")
 
     if return_all_data:
-        # Add some more stuff to res and return
-        if res is None:
-            res = {}
-            res['best_fitpoly'] = None
-
-        # Rename this one for clarity
+        # In this case, need to return a dict, even if no fit found
         if refit_data:
+            # In this case we expect to have refit_best_poly
+            if res is None:
+                # No fit found
+                res = {'refit_best_poly': None}
+            
+            # Always have a key b2v_fit that is the appropriate fit
             res['b2v_fit'] = res['refit_best_poly']
         else:
+            # In this case we expect to have best_fitpoly
+            if res is None:
+                # No fit found
+                res = {'best_fitpoly': None}
+            
+            # Always have a key b2v_fit that is the appropriate fit
             res['b2v_fit'] = res['best_fitpoly']
         
         # Add in lums and other data sources for clarity
