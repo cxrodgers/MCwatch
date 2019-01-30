@@ -13,8 +13,11 @@ import networkx as nx
 import glob
 import os
 
-def plot_by_training_stage():
+def plot_by_training_stage(mouse_names=None):
     """Plot performance by stage of training for every mouse.
+    
+    mouse_names : list, or None
+        If not None, only mouse names in this list will be included
     
     Breaks the performance plot with vertical lines after every:
     * Scheduler change
@@ -42,8 +45,11 @@ def plot_by_training_stage():
     
     # Get mouse sorted by number
     import runner.models
-    mouse_l = runner.models.Mouse.objects.filter(
-        in_training=True).order_by('number').values_list('name', flat=True)
+    if mouse_names is None:
+        mouse_l = runner.models.Mouse.objects.filter(
+            in_training=True).order_by('number').values_list('name', flat=True)
+    else:
+        mouse_l = mouse_names
 
     # Plot each mouse in its own axis
     gobj = session_table.groupby('mouse')
