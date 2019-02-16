@@ -254,6 +254,10 @@ def daily_update_perf_metrics(start_date=None, verbose=False):
         
         # Otherwise run
         trial_matrix = MCwatch.behavior.db.get_trial_matrix(session)
+        if len(trial_matrix) == 0:
+            if verbose:
+                print "skipping session with no rows: %s" % session
+            continue
         metrics = MCwatch.behavior.db.calculate_perf_metrics(trial_matrix)
         
         # Store

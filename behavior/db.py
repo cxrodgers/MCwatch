@@ -841,10 +841,16 @@ def calculate_perf_metrics(trial_matrix):
     """Calculate simple performance metrics on a session"""
     rec = {}
     
+    if len(trial_matrix) == 0:
+        raise ValueError("trial matrix has no rows")
+    
     # Trials and spoiled fraction
     rec['n_trials'] = len(trial_matrix)
-    rec['spoil_frac'] = float(np.sum(trial_matrix.outcome == 'spoil')) / \
-        len(trial_matrix)
+    try:
+        rec['spoil_frac'] = float(np.sum(trial_matrix.outcome == 'spoil')) / \
+            len(trial_matrix)
+    except ZeroDivisionError:
+        rec['spoil_frac'] = np.nan
 
     # Calculate performance
     try:
