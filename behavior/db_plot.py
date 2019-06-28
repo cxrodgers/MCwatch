@@ -144,6 +144,12 @@ def plot_by_training_stage_one_mouse(msessions, mchanges, ax=None,
         # Get corresponding df from mchanges
         pchanges = mchanges2.ix[psessions.index]
         
+        # Color by scheduler
+        if (psessions['scheduler'] == 'Auto').all():
+            color = 'b'
+        else:
+            color = 'r'
+        
         # All changes should have occurred in first row
         if pchanges[1:].any().any():
             raise ValueError("unexpected changes in middle of partition")
@@ -159,10 +165,12 @@ def plot_by_training_stage_one_mouse(msessions, mchanges, ax=None,
             shortened_value = shorten_param_value(cp, value)
             partlabel += shortened_value + '\n'
 
+        # Plot the performance of each session
         idxs = psessions.index.values
         ax.plot(xt[idxs], psessions.perf.values, marker='o', ls='-',
-            color='b')
+            color=color)
         
+        # Text the part label
         ax.text(np.mean(xt[idxs]), .1, partlabel, ha='center', 
             size='xx-small', clip_on=True)
         
