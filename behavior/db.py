@@ -227,6 +227,8 @@ def calculate_perf_by_training_stage(partition_params=None, drop_inactive=True,
         change_table : DataFrame, boolean, where each entry reflects
             where the partition occurred for that parameter
     """
+    tz = pytz.timezone('America/New_York')
+    
     if partition_params is None:
         partition_params = ['stimulus_set', 'scheduler', 'trim', 'board', 'box']
 
@@ -242,10 +244,10 @@ def calculate_perf_by_training_stage(partition_params=None, drop_inactive=True,
     
     # Drop old data
     if n_days_history is not None:
-        start_date = (datetime.date.today() - 
+        start_date = (datetime.datetime.now().replace(tzinfo=tz) - 
             datetime.timedelta(days=n_days_history))
         session_table = session_table[
-            session_table.date_time_start > pandas.Timestamp(start_date)]
+            session_table.date_time_start > start_date]
 
     # Get the trims table
     trims = get_whisker_trims_table()

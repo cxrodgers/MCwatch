@@ -12,6 +12,7 @@ from my.plot import generate_colorbar
 import networkx as nx
 import glob
 import os
+import pytz
 
 def plot_by_training_stage(mouse_names=None):
     """Plot performance by stage of training for every mouse.
@@ -114,8 +115,9 @@ def plot_by_training_stage_one_mouse(msessions, mchanges, ax=None,
         mchanges = mchanges.ix[msessions.index]
     
     # Choose start date
+    tz = pytz.timezone('America/New_York')
     if start_date is None:
-        start_date = (datetime.datetime.now() - 
+        start_date = (datetime.datetime.now().replace(tzinfo=tz) - 
             datetime.timedelta(days=delta_days))
     
     # Group by partition
