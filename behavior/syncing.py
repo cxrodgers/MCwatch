@@ -549,7 +549,8 @@ def get_or_save_lums(session, lumdir=None, meth='gray', verbose=True,
 def sync_video_with_behavior(trial_matrix, lums=None,
     light_delta=75, diffsize=2, refrac=50,
     assumed_fps=30., error_if_no_fit=False, verbose=False,
-    return_all_data=False, refit_data=True):
+    return_all_data=False, refit_data=True,
+    video_frame_range_start=None, video_frame_range_stop=None):
     """Sync video with behavioral file
     
     Uses decrements in luminance and the backlight signal to do the sync.
@@ -565,6 +566,10 @@ def sync_video_with_behavior(trial_matrix, lums=None,
     verbose : passed to process_chunks_of_video to print out frame
         number for each chunk
         And also sent to longest_unique_fit
+    
+    video_frame_range_start, video_frame_range_stop : int or None
+        Any flashes in the video data outside of this range will be ignored
+        These are interpreted Pythonically (half-open)
     
     See MCwatch.behavior.syncing.extract_onsets_and_durations for details on
     light_delta, diffsize, and refrac.
@@ -582,6 +587,20 @@ def sync_video_with_behavior(trial_matrix, lums=None,
     # Get onsets and durations
     onsets, durations = extract_onsets_and_durations(-lums.values, 
         delta=light_delta, diffsize=diffsize, refrac=refrac)
+
+    # Apply video_frame_range_start
+    if video_frame_range_start is not None:
+        # Discard onsets that are not within the frame range
+        keep_mask = (onsets >= video_frame_range_start)
+        onsets = onsets[keep_mask]
+        durations = durations[keep_mask]
+
+    # Apply video_frame_range_stop
+    if video_frame_range_stop is not None:
+        # Discard onsets that are not within the frame range
+        keep_mask = ((onsets + durations) < video_frame_range_stop)
+        onsets = onsets[keep_mask]
+        durations = durations[keep_mask]        
 
     # Convert to seconds in the spurious timebase
     v_onsets = onsets / assumed_fps
