@@ -599,6 +599,13 @@ def sync_video_with_behavior(trial_matrix, lums=None,
     if video_frame_range_stop is not None:
         # Discard onsets that are not within the frame range
         keep_mask = ((onsets + durations) < video_frame_range_stop)
+        
+        # Even the last onset should be discarded, because part of its
+        # trial will be during the exclusion period
+        if not np.any(keep_mask):
+            raise ValueError("no onsets left")
+        keep_mask[np.where(keep_mask)[0][-1]] = False
+        
         onsets = onsets[keep_mask]
         durations = durations[keep_mask]        
 
