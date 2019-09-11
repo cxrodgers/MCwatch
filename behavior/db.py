@@ -805,7 +805,7 @@ def calculate_pivoted_performances(start_date=None, delta_days=15,
     return piv
 
 def calculate_pivoted_perf_by_rig(start_date=None, delta_days=15, 
-    drop_mice=None):
+    drop_mice=None, include_rigs=None):
     """Pivot performance by rig and day"""
     # Choose start date
     if start_date is None:
@@ -815,19 +815,26 @@ def calculate_pivoted_perf_by_rig(start_date=None, delta_days=15,
     # Get behavior data
     bdf = get_behavior_df()
     
-    # Get perf columns of interest and join on rig and date
-    pmdf = get_perf_metrics()[[
-        'session', 'perf_unforced', 'n_trials', 'fev_side_unforced']]
+    # Get perf 
+    pmdf = get_perf_metrics()
+    
+    # Join on rig, date_time_start, and mouse name
     pmdf = pmdf.join(bdf.set_index('session')[['rig', 'dt_start', 'mouse']], 
         on='session')
-    pmdf = pmdf.ix[pmdf.dt_start >= start_date].drop('dt_start', 1)
+    
+    # Filter by start date
+    pmdf = pmdf.loc[pmdf.dt_start >= start_date].drop('dt_start', 1)
+    
+    # Filter by rig
+    if include_rigs is not None:
+        pmdf = pmdf.loc[pmdf['rig'].isin(include_rigs)]
 
     # always sort on session
     pmdf = pmdf.sort_values(by='session')
 
     # add a "date_s" column which is just taken from the session for now
     pmdf['date_s'] = pmdf['session'].str[2:8]
-    pmdf['date_s'] = pmdf['date_s'].apply(lambda s: s[:2]+'-'+s[2:4]+'-'+s[4:6])
+    pmdf['date_s'] = pmdf['date_s'].apply(lambda s: s[2:4]+'-'+s[4:6])
 
     # drop by mice
     if drop_mice is not None:

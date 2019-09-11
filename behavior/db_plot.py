@@ -566,81 +566,78 @@ def display_perf_by_servo(session=None, tm=None, ax=None, mean_meth='lr_pool'):
     
     return ax
 
-def display_perf_by_rig(piv=None, drop_mice=('KF28', 'KM14', 'KF19')):
+def display_perf_by_rig(piv=None, drop_mice=None,   
+    include_rigs=('CR1', 'CR2', 'CR3', 'CR6', 'J2', 'J3', 'CR4', 'CR0'),
+    delta_days=20):
     """Display performance by rig over days"""
     # Get pivoted unless provided
     if piv is None:
-        piv = MCwatch.behavior.db.calculate_pivoted_perf_by_rig(drop_mice=drop_mice)
+        piv = MCwatch.behavior.db.calculate_pivoted_perf_by_rig(
+            drop_mice=drop_mice, include_rigs=include_rigs,
+            delta_days=delta_days)
     
-    # plot each
-    to_plot_f_l = [
-        ['perf_unforced', 'n_trials', 'fev_side_unforced',]
-        ]
+    # Get rig_l from the index of piv
+    rig_l = list(piv.index)
     
-    # The order of the traces, actually rig_order here not mouse_order
-    mouse_order = piv['perf_unforced'].mean(1)
-    mouse_order.sort_values(inplace=True)
-    mouse_order = mouse_order.index.values
+    # Which metrics to plot, in the top level of the columns of `piv`
+    metric_l = ['perf_all', 'n_trials', 'fev_side_unforced']
+    
+    # Plot each metric and rig separately
+    f, axa = plt.subplots(len(include_rigs), len(metric_l), 
+        sharex=True, sharey='col', figsize=(8, 8))
+    f.subplots_adjust(bottom=.075, top=.95, wspace=.4, hspace=.4)
     
     # Plot each
-    res_l = []
-    for to_plot in to_plot_f_l:
-        f, axa = plt.subplots(len(to_plot), 1, figsize=(7, 15))
-        f.subplots_adjust(top=.95, bottom=.075)
-        xlabels = piv.columns.levels[1].values
-        xlabels_num = np.arange(len(xlabels))
-        mice = mouse_order #piv.index.values
-        colors = generate_colorbar(len(mice), 'jet')
-        
-        # Iterate over metrics
-        for ax, metric in zip(axa, to_plot):
-            pm = piv[metric]
+    for metric in metric_l:
+        for rig in rig_l:
+            # Get ax
+            ax = axa[rig_l.index(rig), metric_l.index(metric)]
+            my.plot.despine(ax)
+            
+            # Label the top ax
+            if rig_l.index(rig) == 0:
+                ax.set_title(metric)
+            
+            # Label the left ax
+            if metric_l.index(metric) == 0:
+                ax.set_ylabel(rig)
+
+            # Get the metric
+            topl = piv.loc[rig, metric]
+            
+            # Labels on x-axis are the dates
+            xlabels = topl.index.values
+            xlabels_num = np.arange(len(xlabels))
+            
+            # Blank out every other date
+            xlabels_arr = np.array(xlabels)
+            xlabels_arr[::2] = ''
+            xlabels_list = list(xlabels_arr)
             
             # Plot the metric
-            for nmouse, mouse in enumerate(mice):
-                ax.plot(xlabels_num, pm.ix[mouse].values, color=colors[nmouse],
-                    ls='-', marker='s', mec='none', mfc=colors[nmouse])
-                ax.set_ylabel(metric)
+            ax.plot(
+                xlabels_num, topl.values, 
+                color='k', ls='-', marker='.', ms=6, clip_on=False,
+            )
 
-            # ylims and chance line
-            if metric != 'n_trials':            
+            # ylims
+            if metric == 'n_trials':
+                ax.set_ylim(ymin=0)
+            else:
                 ax.set_ylim((0, 1))
-                ax.set_yticks((0, .25, .5, .75, 1))
-            if metric.startswith('perf'):
-                ax.plot(xlabels_num, np.ones_like(xlabels_num) * .5, 'k-')
+                ax.set_yticks((0, .5, 1))
 
-            # Plot error X on missing sessions
-            if ax is axa[-1]:
-                for nmouse, mouse in enumerate(mice):
-                    null_dates = piv['n_trials'].isnull().ix[mouse].values
-                    pm_copy = np.ones_like(null_dates) * \
-                        (nmouse + 0.5) / float(len(mice))
-                    pm_copy[~null_dates] = np.nan
-                    ax.plot(xlabels_num, pm_copy, color=colors[nmouse], marker='x',
-                        ls='none', mew=1)
+            # Chance line
+            if metric.startswith('perf'):
+                ax.plot(xlabels_num, np.ones_like(xlabels_num) * .5, 
+                    'k-', lw=.5)
 
             # xticks
             ax.set_xlim((xlabels_num[0], xlabels_num[-1]))
-            if ax is axa[-1]:
-                ax.set_xticks(xlabels_num)
-                ax.set_xticklabels(xlabels, rotation=45, ha='right', size='small')
-            else:
-                ax.set_xticks(xlabels_num)
-                ax.set_xticklabels([''] * len(xlabels_num))
-        
-        # mouse names in the top
-        ax = axa[0]
-        xlims = ax.get_xlim()
-        for nmouse, (mouse, color) in enumerate(zip(mice, colors)):
-            xpos = xlims[0] + (nmouse + 0.5) / float(len(mice)) * \
-                (xlims[1] - xlims[0])
-            ax.text(xpos, 0.2, mouse, color=color, ha='center', va='center', 
-                rotation=90)
-        
-        # Store to return
-        res_l.append(f)
+            ax.set_xticks(xlabels_num)
+            ax.set_xticklabels(xlabels_list, rotation=90, size='small')
     
-    return res_l
+    return f
 
 def display_session_plot(session, stimulus_set=None):
     """Display the real-time plot that was shown during the session.
