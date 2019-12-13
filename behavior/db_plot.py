@@ -1,4 +1,5 @@
 """Module for plotting diagnostics from db"""
+from __future__ import print_function
 
 import numpy as np
 import pandas
@@ -134,7 +135,7 @@ def plot_by_training_stage_one_mouse(msessions, mchanges, ax=None,
         start_idx = beyond_start_date.ix[beyond_start_date.values].index[0]
     except IndexError:
         # nothing to plot
-        print "no data to plot"
+        print("no data to plot")
         ax.set_xticks([])
         ax.set_yticks([])
         return ax
@@ -676,7 +677,7 @@ def display_session_plot(session, stimulus_set=None):
         try:
             plotter.update(filename)     
         except (ArduFSM.plot.TrialTypesError, KeyError):
-            print "warning: trying different trial types"
+            print("warning: trying different trial types")
             plt.close(plotter.graphics_handles['f'])
             continue
         break

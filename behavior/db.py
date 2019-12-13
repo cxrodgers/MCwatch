@@ -1,6 +1,7 @@
 """Maintaining the database of behavioral data
 
 """
+from __future__ import print_function
 import os
 import datetime
 import numpy as np
@@ -584,8 +585,8 @@ def interactive_bv_sync():
     choices = sbvdf[['session', 'dt_start', 'best_video_overlap', 'rig', 'fit1']]
     choices = choices.rename(columns={'best_video_overlap': 'vid_overlap'})
 
-    print "Here are the most recent sessions:"
-    print choices[-20:]
+    print("Here are the most recent sessions:")
+    print(choices[-20:])
     choice = None
     while choice is None:
         choice = raw_input('Which index to analyze? ')
@@ -614,9 +615,9 @@ def interactive_bv_sync():
     if res == 'y':
         set_manual_bv_sync(test_row['session'], 
             sync_res1['combined_fit'])
-        print "inserted"
+        print("inserted")
     else:
-        print "not inserting"    
+        print("not inserting")    
 
 
 
@@ -779,14 +780,14 @@ def calculate_pivoted_performances(start_date=None, delta_days=15,
     # We want to keep the last of the day (??) so take_first
     dup_idxs = pmdf[['date_s', 'mouse']].duplicated(take_last=False)
     if dup_idxs.sum() > 0:
-        print "warning: dropping %d duplicated sessions" % dup_idxs.sum()
-        print "\n".join(pmdf['session'][dup_idxs].values)
+        print("warning: dropping %d duplicated sessions" % dup_idxs.sum())
+        print("\n".join(pmdf['session'][dup_idxs].values))
         pmdf = pmdf.drop(pmdf.index[dup_idxs])
 
     if drop_perfect:
         mask = (pmdf.perf_all == 1.0) | (pmdf.perf_unforced == 1.0)
         if np.sum(mask) > 0:
-            print "warning: dropping %d perfect sessions" % np.sum(mask)
+            print("warning: dropping %d perfect sessions" % np.sum(mask))
             pmdf = pmdf[~mask]
 
     # pivot on all metrics
@@ -799,8 +800,8 @@ def calculate_pivoted_performances(start_date=None, delta_days=15,
     for idx, row in missing_data.iterrows():
         missing_rows.append(row['date_s'] + ' ' + row['mouse'])
     if len(missing_rows) > 0 and display_missing:
-        print "warning: missing the following sessions:"
-        print "\n".join(missing_rows)
+        print("warning: missing the following sessions:")
+        print("\n".join(missing_rows))
     
     return piv
 
@@ -941,7 +942,7 @@ def search_for_sandboxes(sandbox_root_dir=None):
 
     # Warn if no results
     if len(saved_directories) == 0:
-        print "warning: no saved directories in %s" % sandbox_root_dir
+        print("warning: no saved directories in %s" % sandbox_root_dir)
     
     # Clean each
     rec_l = []
@@ -994,7 +995,7 @@ def search_for_behavior_and_video_files(
     # Acquire all video files
     video_files = glob.glob(os.path.join(video_dir, '*.mp4'))
     if len(video_files) == 0:
-        print "warning: no video files found"
+        print("warning: no video files found")
     video_files_df = parse_video_filenames(video_files, verbose=True,
         cached_video_files_df=cached_video_files_df)
 
@@ -1201,11 +1202,11 @@ def parse_sandboxes(sandboxes, clean=True):
         
         # Skip if non-unique
         if len(ardulines_files) == 0:
-            print "warning: no ardulines in %s" % sandbox_dir
+            print("warning: no ardulines in %s" % sandbox_dir)
             continue
         
         if len(ardulines_files) > 1:
-            print "warning: multiple ardulines in %s" % sandbox_dir
+            print("warning: multiple ardulines in %s" % sandbox_dir)
             continue
         
         # Get ardulines filename
@@ -1237,7 +1238,7 @@ def parse_sandboxes(sandboxes, clean=True):
                 try:
                     params = json.load(fi)
                 except IOError:
-                    print "warning: skipping bad json file: %s" % json_file
+                    print("warning: skipping bad json file: %s" % json_file)
                     continue
             stimulus_set = params.get('stimulus_set', '')
             
@@ -1259,8 +1260,8 @@ def parse_sandboxes(sandboxes, clean=True):
             elif 'LickTrain.py' in script_files:
                 protocol = 'LickTrain'
             else:
-                print "warning: skipping unrecognized protocol in %s" % (
-                    ardulines_filename)
+                print("warning: skipping unrecognized protocol in %s" % (
+                    ardulines_filename))
                 continue
             
             # Store
@@ -1326,7 +1327,7 @@ def parse_video_filenames(video_filenames, verbose=False,
             continue
         
         if verbose:
-            print video_filename
+            print(video_filename)
         
         # Match filename pattern
         m = re.match(pattern, os.path.abspath(video_filename))
@@ -1351,7 +1352,7 @@ def parse_video_filenames(video_filenames, verbose=False,
                     'dt_end': video_end_time,
                     })            
                 if verbose:
-                    print "Invalid data found by ffprobe in %s" % video_filename
+                    print("Invalid data found by ffprobe in %s" % video_filename)
                 continue
 
             # Parse out start time
@@ -1376,7 +1377,7 @@ def parse_video_filenames(video_filenames, verbose=False,
             except ValueError:
                 # eg, corrupted file
                 if verbose:
-                    print "cannot get duration, corrupted?: %s" % video_filename
+                    print("cannot get duration, corrupted?: %s" % video_filename)
                 continue
                 
             video_end_time = video_start_time + video_duration

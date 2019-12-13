@@ -1,4 +1,5 @@
 """Module for generating overlays of shape positions"""
+from __future__ import print_function
 import os
 import numpy as np
 import pandas
@@ -171,7 +172,7 @@ def make_overlays_from_fits(session, overwrite_frames=False, savefig=True,
             session + '.png')
         if os.path.exists(savename):
             if verbose:
-                print "overlay image already exists, returning:", savename
+                print("overlay image already exists, returning:", savename)
             return
     
     # Join all the dataframes we need and check that session is in there
@@ -186,14 +187,14 @@ def make_overlays_from_fits(session, overwrite_frames=False, savefig=True,
     # Generate or reload the cache
     if not overwrite_frames and os.path.exists(cache_filename):
         if verbose:
-            print "reloading", cache_filename
+            print("reloading", cache_filename)
         trial_number2frame = my.misc.pickle_load(cache_filename)
     else:
         if jdf.loc[session, 
             ['filename', 'filename_video', 'fit0', 'fit1']].isnull().any():
             raise ValueError("not enough syncing information for %s" % session)
         if verbose:
-            print "generating", cache_filename
+            print("generating", cache_filename)
         trial_number2frame = extract_frames_at_retraction_times(
             behavior_filename=jdf.loc[session, 'filename'], 
             video_filename=jdf.loc[session, 'filename_video'],
@@ -262,7 +263,7 @@ def extract_frames_at_retraction_times(behavior_filename, video_filename,
     trial_number2frame = {}
     for trial_number, retract_time in state_change_times_vbase.dropna().iteritems():
         if verbose:
-            print trial_number
+            print(trial_number)
         frame, stdout, stderr = my.video.get_frame(
             video_filename, frametime=retract_time, pix_fmt='gray')
         trial_number2frame[trial_number] = frame

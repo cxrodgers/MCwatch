@@ -1,6 +1,7 @@
 """Various performance metrics and plotting
 
 """
+from __future__ import print_function
 import pandas
 import my
 import numpy as np
@@ -95,7 +96,7 @@ def calculate_perf_by_number_of_contacts(tm, bins=None):
         bins = np.asarray(bins)
     
     if np.any(tm.n_contacts > bins.max()):
-        print "warning: dropping trials with more contacts than maximum bin"
+        print("warning: dropping trials with more contacts than maximum bin")
         1/0
     
     # This counts hits and errors for every value of n_contacts
@@ -134,7 +135,7 @@ def histogram_number_of_contacts(n_contacts, bins=None):
         bins = np.asarray(bins)
     
     if np.any(n_contacts > bins.max()):
-        print "warning: dropping trials with more contacts than maximum bin"
+        print("warning: dropping trials with more contacts than maximum bin")
         1/0
     
     cdf = n_contacts.value_counts().sort_index()

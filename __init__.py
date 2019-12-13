@@ -21,6 +21,7 @@ os.environ.setdefault("DJANGO_SETTINGS_MODULE", "mouse2.settings")
 sys.path.append(os.path.expanduser('~/dev/mouse-cloud'))
 django.setup()
 """
+from __future__ import absolute_import
 
 import os
 import sys
@@ -74,6 +75,6 @@ except ImportError:
     pass
 
 # Import the sub-modules
-import behavior
-import neural
-import whisker
+from . import behavior
+from . import neural
+from . import whisker

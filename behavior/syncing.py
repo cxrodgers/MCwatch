@@ -1,4 +1,5 @@
 """Module for syncing behavioral and video files"""
+from __future__ import print_function
 import os
 import numpy as np
 import pandas
@@ -111,15 +112,15 @@ def generate_mplayer_guesses_and_sync(metadata,
     # Print mplayer commands
     for test_time, test_next_time in zip(test_times, test_next_times):
         pre_test_time = int(test_time) - pre_time
-        print 'mplayer -ss %d %s # guess %0.1f, next %0.1f' % (pre_test_time, 
-            metadata['filename_video'], test_time, test_next_time)
+        print('mplayer -ss %d %s # guess %0.1f, next %0.1f' % (pre_test_time, 
+            metadata['filename_video'], test_time, test_next_time))
 
     # If no data provided, just return
     if user_results is None:
         return {'test_times': test_times}
     if len(user_results) != N:
-        print "warning: len(user_results) should be %d not %d" % (
-            N, len(user_results))
+        print("warning: len(user_results) should be %d not %d" % (
+            N, len(user_results)))
         return {'test_times': test_times}
     
     # Otherwise, fit a correction to the original guess
@@ -131,10 +132,10 @@ def generate_mplayer_guesses_and_sync(metadata,
     combined_fit = np.polyval(np.poly1d(new_fit), np.poly1d(initial_guess))
 
     # Diagnostics
-    print os.path.split(metadata['filename'])[-1]
-    print os.path.split(metadata['filename_video'])[-1]
-    print "combined_fit: %r" % np.asarray(combined_fit)
-    print "resids: %r" % np.asarray(resids)    
+    print(os.path.split(metadata['filename'])[-1])
+    print(os.path.split(metadata['filename_video'])[-1])
+    print("combined_fit: %r" % np.asarray(combined_fit))
+    print("resids: %r" % np.asarray(resids))    
     
     return {'test_times': test_times, 'resids': resids, 
         'combined_fit': combined_fit}
@@ -185,18 +186,18 @@ def extract_onsets_and_durations(lums, delta=30, diffsize=3, refrac=5,
     onsets = np.where(diffsig > delta)[0] + diffsize
     offsets = np.where(diffsig < -delta)[0] + diffsize
     if verbose:
-        print onsets
+        print(onsets)
     
     # drop refractory onsets, offsets
     onsets2 = drop_refrac(onsets, refrac)
     offsets2 = drop_refrac(offsets, refrac)    
     if verbose:
-        print onsets2
+        print(onsets2)
     
     # get durations
     remaining_onsets, durations = extract_duration_of_onsets2(onsets2, offsets2)
     if verbose:
-        print remaining_onsets
+        print(remaining_onsets)
     
     # apply maximum duration mask
     if maximum_duration is not None:
@@ -404,7 +405,7 @@ def longest_unique_fit(xdata, ydata, start_fitlen=3, ss_thresh=.0003,
     best_fitpoly = None
 
     if verbose:
-        print "begin with fitlen", fitlen
+        print("begin with fitlen", fitlen)
 
     while keep_going:        
         # Slice out xdata
@@ -413,11 +414,11 @@ def longest_unique_fit(xdata, ydata, start_fitlen=3, ss_thresh=.0003,
         # Check if we ran out of data
         if len(chosen_idxs) != fitlen * 2:
             if verbose:
-                print "out of data, breaking"
+                print("out of data, breaking")
             break
         if np.any(np.isnan(chosen_idxs)):
             if verbose:
-                print "nan data, breaking"
+                print("nan data, breaking")
             break
 
         # Find the best consecutive fit among onsets
@@ -440,7 +441,7 @@ def longest_unique_fit(xdata, ydata, start_fitlen=3, ss_thresh=.0003,
         if len(rec_l) == 0:
             keep_going = False
             if verbose:
-                print "no fits to threshold, breaking"
+                print("no fits to threshold, breaking")
             break
         
         # Look at results
@@ -453,7 +454,7 @@ def longest_unique_fit(xdata, ydata, start_fitlen=3, ss_thresh=.0003,
         if len(rdf) == 0:
             keep_going = False
             if verbose:
-                print "no fits under threshold, breaking"
+                print("no fits under threshold, breaking")
             break
         
         # Take the best fit
@@ -463,9 +464,9 @@ def longest_unique_fit(xdata, ydata, start_fitlen=3, ss_thresh=.0003,
         if verbose:
             fmt = "fitlen=%d. best fit: x=%d, y=%d, xvy=%d, " \
                 "ss=%0.3g, poly=%0.4f %0.4f"
-            print fmt % (fitlen, x_midslice_start - fitlen, best_index, 
+            print(fmt % (fitlen, x_midslice_start - fitlen, best_index, 
                 x_midslice_start - fitlen - best_index, 
-                best_ss / len(chosen_idxs), best_fitpoly[0], best_fitpoly[1])
+                best_ss / len(chosen_idxs), best_fitpoly[0], best_fitpoly[1]))
 
         # Increase the size
         last_good_fitlen = fitlen
@@ -527,13 +528,13 @@ def get_or_save_lums(session, lumdir=None, meth='gray', verbose=True,
     
     # If new exists, return
     if os.path.exists(new_lum_filename):
-        print "cached lums found"
+        print("cached lums found")
         lums = my.misc.pickle_load(new_lum_filename)
         return lums    
 
     # Get the lums ... this takes a while
     if verbose:
-        print "calculating lums.."
+        print("calculating lums..")
     if meth == 'gray':
         lums = my.video.process_chunks_of_video(vfilename, n_frames=np.inf,
             verbose=verbose, image_w=image_w, image_h=image_h)

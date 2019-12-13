@@ -1,4 +1,5 @@
 """Module for running daily updates on database"""
+from __future__ import print_function
 import os
 import numpy as np
 import glob
@@ -37,7 +38,7 @@ def daily_update_behavior(force_reparse=False):
         file, and error if there somehow are duplicates in the concatenated
         CSV file.
     """
-    print "daily_update_behavior: start"
+    print("daily_update_behavior: start")
     
     # load the current database
     current_bdf = MCwatch.behavior.db.get_behavior_df()
@@ -56,7 +57,7 @@ def daily_update_behavior(force_reparse=False):
     # Search for new sandboxes
     # TODO: replace this with PATHS
     discovered_sandboxes = MCwatch.behavior.db.search_for_sandboxes()
-    print "info: discovered %d sandboxes" % len(discovered_sandboxes)
+    print("info: discovered %d sandboxes" % len(discovered_sandboxes))
 
     # Identify which need to be parsed
     if force_reparse:
@@ -71,9 +72,9 @@ def daily_update_behavior(force_reparse=False):
     # Parse the new sandboxes
     newly_added_bdf = MCwatch.behavior.db.parse_sandboxes(new_sandboxes)
     if newly_added_bdf is None:
-        print "info: no new sandboxes found"
+        print("info: no new sandboxes found")
     else:
-        print "info: parsed %d new sandboxes" % len(newly_added_bdf)
+        print("info: parsed %d new sandboxes" % len(newly_added_bdf))
 
         # Concatenate known and new
         new_bdf = pandas.concat([current_bdf, newly_added_bdf],
@@ -106,7 +107,7 @@ def daily_update_behavior(force_reparse=False):
         filename = os.path.join(PATHS['database_root'], 'behavior.csv')
         new_bdf.to_csv(filename, index=False)
     
-    print "daily_update_behavior: done"
+    print("daily_update_behavior: done")
     
 def daily_update_video():
     """Update video database
@@ -206,7 +207,7 @@ def daily_update_trial_matrix(start_date=None, verbose=False):
         filename = os.path.join(PATHS['database_root'], 'trial_matrix', 
             row['session'])
         if verbose:
-            print filename
+            print(filename)
 
         # Make it
         trial_matrix = TrialMatrix.make_trial_matrix_from_file(row['filename'])
@@ -245,7 +246,7 @@ def daily_update_perf_metrics(start_date=None, verbose=False):
         session = brow['session']
         if session in pmdf['session'].values:
             if verbose:
-                print "skipping", session
+                print("skipping", session)
             continue
         
         # Skip anything that is not TwoChoice
@@ -256,7 +257,7 @@ def daily_update_perf_metrics(start_date=None, verbose=False):
         trial_matrix = MCwatch.behavior.db.get_trial_matrix(session)
         if len(trial_matrix) == 0:
             if verbose:
-                print "skipping session with no rows: %s" % session
+                print("skipping session with no rows: %s" % session)
             continue
         metrics = MCwatch.behavior.db.calculate_perf_metrics(trial_matrix)
         
