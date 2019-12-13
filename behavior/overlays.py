@@ -1,5 +1,8 @@
 """Module for generating overlays of shape positions"""
 from __future__ import print_function
+from __future__ import division
+from builtins import str
+from past.utils import old_div
 import os
 import numpy as np
 import pandas
@@ -95,7 +98,7 @@ def make_overlay(sess_meaned_frames, ax, meth='all'):
             
     # Color them into the R and G space, with zeros for B
     C = np.array([L, R, np.zeros_like(L)])
-    C = C.swapaxes(0, 2).swapaxes(0, 1) / 255.
+    C = old_div(C.swapaxes(0, 2).swapaxes(0, 1), 255.)
 
     my.plot.imshow(C, ax=ax, axis_call='image', origin='upper')
     ax.set_xticks([]); ax.set_yticks([])
@@ -110,11 +113,11 @@ def timedelta_to_seconds1(val):
     or by 1e9
     """
     ite = val.item() # in nanoseconds
-    return ite / 1e9
+    return old_div(ite, 1e9)
 
 def timedelta_to_seconds2(val):
     """More preferred ... might have been broken in old versions."""
-    return val / np.timedelta64(1, 's')
+    return old_div(val, np.timedelta64(1, 's'))
 
 def make_overlays_from_fits_for_day(overwrite_frames=False, savefig=True,
     date=None):
@@ -249,7 +252,7 @@ def extract_frames_at_retraction_times(behavior_filename, video_filename,
     # Fit to video times
     state_change_times_vbase = pandas.Series(
         index=state_change_times.index,
-        data=np.polyval(b2v_fit, state_change_times.values / 1000.)
+        data=np.polyval(b2v_fit, old_div(state_change_times.values, 1000.))
         )
     
     # Mask out any frametimes that are before or after the video
@@ -261,7 +264,7 @@ def extract_frames_at_retraction_times(behavior_filename, video_filename,
     
     # Extract frames
     trial_number2frame = {}
-    for trial_number, retract_time in state_change_times_vbase.dropna().iteritems():
+    for trial_number, retract_time in state_change_times_vbase.dropna().items():
         if verbose:
             print(trial_number)
         frame, stdout, stderr = my.video.get_frame(

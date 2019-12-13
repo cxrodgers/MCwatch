@@ -2,6 +2,12 @@
 
 """
 from __future__ import print_function
+from __future__ import division
+from future import standard_library
+standard_library.install_aliases()
+from builtins import input
+from builtins import range
+from past.utils import old_div
 import os
 import datetime
 import numpy as np
@@ -28,7 +34,7 @@ import sqlalchemy
 
 # for get_whisker_trims_table
 import requests
-from StringIO import StringIO
+from io import StringIO
 import pytz
 
 def get_django_database_path():
@@ -589,7 +595,7 @@ def interactive_bv_sync():
     print(choices[-20:])
     choice = None
     while choice is None:
-        choice = raw_input('Which index to analyze? ')
+        choice = input('Which index to analyze? ')
         try:
             choice = int(choice)
         except ValueError:
@@ -603,7 +609,7 @@ def interactive_bv_sync():
     # Get results
     n_results = []
     for n in range(N_pts):
-        res = raw_input('Enter result: ')
+        res = input('Enter result: ')
         n_results.append(float(res))
 
     # Run sync again
@@ -611,7 +617,7 @@ def interactive_bv_sync():
         user_results=n_results)
 
     # Store
-    res = raw_input('Confirm insertion [y/N]? ')
+    res = input('Confirm insertion [y/N]? ')
     if res == 'y':
         set_manual_bv_sync(test_row['session'], 
             sync_res1['combined_fit'])
@@ -685,7 +691,7 @@ def check_logfile(logfile, state_names='original'):
 
     # Extract state change times
     st_chg = ArduFSM.TrialSpeak.get_commands_from_parsed_lines(rdf, 'ST_CHG2')
-    st_chg['time'] = st_chg['time'] / 1000.
+    st_chg['time'] = old_div(st_chg['time'], 1000.)
 
     # Get duration that it was in the state in 'arg0' column
     st_chg['duration'] = st_chg['time'].diff()
@@ -857,15 +863,15 @@ def calculate_perf_metrics(trial_matrix):
     # Trials and spoiled fraction
     rec['n_trials'] = len(trial_matrix)
     try:
-        rec['spoil_frac'] = float(np.sum(trial_matrix.outcome == 'spoil')) / \
-            len(trial_matrix)
+        rec['spoil_frac'] = old_div(float(np.sum(trial_matrix.outcome == 'spoil')), \
+            len(trial_matrix))
     except ZeroDivisionError:
         rec['spoil_frac'] = np.nan
 
     # Calculate performance
     try:
-        rec['perf_all'] = float(len(my.pick(trial_matrix, outcome='hit'))) / \
-            len(my.pick(trial_matrix, outcome=['hit', 'error']))
+        rec['perf_all'] = old_div(float(len(my.pick(trial_matrix, outcome='hit'))), \
+            len(my.pick(trial_matrix, outcome=['hit', 'error'])))
     except ZeroDivisionError:
         rec['perf_all'] = np.nan
     
@@ -875,9 +881,9 @@ def calculate_perf_metrics(trial_matrix):
     if n_nonbad_nonspoiled_trials < 10:
         rec['perf_unforced'] = np.nan
     else:
-        rec['perf_unforced'] = float(
-            len(my.pick(trial_matrix, outcome='hit', isrnd=True))) / \
-            n_nonbad_nonspoiled_trials
+        rec['perf_unforced'] = old_div(float(
+            len(my.pick(trial_matrix, outcome='hit', isrnd=True))), \
+            n_nonbad_nonspoiled_trials)
 
     # Anova with and without remove bad
     for remove_bad in [True, False]:
@@ -914,7 +920,7 @@ def calculate_perf_by_rewside_and_servo_pos(trial_matrix):
         rec_l.append({'rewside': rwsd, 'servo_pos': sp, 
             'nhits': nhits, 'ntots': ntots})
     resdf = pandas.DataFrame.from_records(rec_l)
-    resdf['perf'] = resdf['nhits'] / resdf['ntots']
+    resdf['perf'] = old_div(resdf['nhits'], resdf['ntots'])
     return resdf
 
 def search_for_sandboxes(sandbox_root_dir=None):
@@ -989,7 +995,7 @@ def search_for_behavior_and_video_files(
     video_dir = os.path.expanduser(video_dir)
 
     # Search for behavior files
-    1/0 # this needs to be updated
+    old_div(1,0) # this needs to be updated
     behavior_files_df = search_for_behavior_files(behavior_dir)
 
     # Acquire all video files
@@ -1079,7 +1085,7 @@ def find_best_overlap_video(behavior_files_df, video_files_df,
         vidx_max_overlap = overlap.argmax()
         
         # Convert from numpy timedelta64 to a normal number
-        max_overlap_sec = overlap.ix[vidx_max_overlap] / np.timedelta64(1, 's')
+        max_overlap_sec = old_div(overlap.ix[vidx_max_overlap], np.timedelta64(1, 's'))
         
         # Store if it's more than zero
         if max_overlap_sec > 0:
@@ -1295,7 +1301,7 @@ def parse_sandboxes(sandboxes, clean=True):
 
     # Sort and reindex
     behavior_files_df = behavior_files_df.sort_values(by='dt_start')
-    behavior_files_df.index = range(len(behavior_files_df))
+    behavior_files_df.index = list(range(len(behavior_files_df)))
     
     return behavior_files_df
 
@@ -1404,7 +1410,7 @@ def parse_video_filenames(video_filenames, verbose=False,
     
     # Sort and reindex
     resdf = resdf.sort_values(by='dt_start')
-    resdf.index = range(len(resdf))    
+    resdf.index = list(range(len(resdf)))    
     
     return resdf
 

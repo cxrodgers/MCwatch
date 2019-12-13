@@ -1,5 +1,9 @@
 """Module for syncing behavioral and video files"""
 from __future__ import print_function
+from __future__ import division
+from builtins import zip
+from builtins import range
+from past.utils import old_div
 import os
 import numpy as np
 import pandas
@@ -104,7 +108,7 @@ def generate_mplayer_guesses_and_sync(metadata,
         trials_info['time_retract'] - test_guess_vvsb
 
     # Choose test times for user
-    video_duration = metadata['duration_video'] / np.timedelta64(1, 's')
+    video_duration = old_div(metadata['duration_video'], np.timedelta64(1, 's'))
     test_times, test_next_times = generate_test_times_for_user(
         trials_info['time_retract_vbase'], video_duration,
         initial_guess=initial_guess, N=N)
@@ -400,7 +404,7 @@ def longest_unique_fit(xdata, ydata, start_fitlen=3, ss_thresh=.0003,
     fitlen = start_fitlen
     last_good_fitlen = 0
     if x_midslice_start is None:
-        x_midslice_start = len(xdata) / 2
+        x_midslice_start = old_div(len(xdata), 2)
     keep_going = True
     best_fitpoly = None
 
@@ -466,7 +470,7 @@ def longest_unique_fit(xdata, ydata, start_fitlen=3, ss_thresh=.0003,
                 "ss=%0.3g, poly=%0.4f %0.4f"
             print(fmt % (fitlen, x_midslice_start - fitlen, best_index, 
                 x_midslice_start - fitlen - best_index, 
-                best_ss / len(chosen_idxs), best_fitpoly[0], best_fitpoly[1]))
+                old_div(best_ss, len(chosen_idxs)), best_fitpoly[0], best_fitpoly[1]))
 
         # Increase the size
         last_good_fitlen = fitlen
@@ -611,7 +615,7 @@ def sync_video_with_behavior(trial_matrix, lums=None,
         durations = durations[keep_mask]        
 
     # Convert to seconds in the spurious timebase
-    v_onsets = onsets / assumed_fps
+    v_onsets = old_div(onsets, assumed_fps)
 
     # Find the time of backlight pulse
     backlight_times = get_light_times_from_behavior_file(trial_matrix)
