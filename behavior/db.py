@@ -134,7 +134,7 @@ def get_whisker_trims_table():
     url = ('https://docs.google.com/spreadsheets/d/'
         '1Dvqw36R2fYTo7iWdTHOf27HONbI78nOcHaqvSEk5Bes/export?format=csv&gid=0')
     r = requests.get(url)
-    trims = pandas.read_csv(StringIO(r.content), 
+    trims = pandas.read_csv(StringIO(r.content.decode('utf-8')), 
         parse_dates=['Date', 'Time (def 11pm)'],
         ).rename(
         columns={'Time (def 11pm)' : 'Time'})
