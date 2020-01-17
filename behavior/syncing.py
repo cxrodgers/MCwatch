@@ -23,7 +23,7 @@ def index_of_biggest_diffs_across_arr(ser, ncuts_total=3):
     # Iterate over cuts and choose the index preceding the largest gap in the cut
     res = []
     for ncut in range(len(cuts) - 1):
-        subser = ser.ix[cuts[ncut]:cuts[ncut+1]]
+        subser = ser.loc[cuts[ncut]:cuts[ncut+1]]
         res.append(subser.diff().shift(-1).argmax())
     return np.asarray(res)
 
@@ -48,8 +48,8 @@ def generate_test_times_for_user(times, max_time, initial_guess=(.9991, 7.5),
     # Identify the best trials to use for manual realignment
     test_idxs = index_of_biggest_diffs_across_arr(
         times, ncuts_total=N)
-    test_times = times.ix[test_idxs]
-    test_next_times = times.shift(-1).ix[test_idxs]
+    test_times = times.loc[test_idxs]
+    test_next_times = times.shift(-1).loc[test_idxs]
     
     return test_times, test_next_times
     
@@ -464,7 +464,7 @@ def longest_unique_fit(xdata, ydata, start_fitlen=3, ss_thresh=.0003,
         # Take the best fit
         best_index = rdf['ss'].idxmin()
         best_ss = rdf['ss'].min()
-        best_fitpoly = rdf['fitpoly'].ix[best_index]
+        best_fitpoly = rdf['fitpoly'].loc[best_index]
         if verbose:
             fmt = "fitlen=%d. best fit: x=%d, y=%d, xvy=%d, " \
                 "ss=%0.3g, poly=%0.4f %0.4f"
@@ -522,7 +522,7 @@ def get_or_save_lums(session, lumdir=None, meth='gray', verbose=True,
     
     # Get metadata about session
     sbvdf = MCwatch.behavior.db.get_synced_behavior_and_video_df().set_index('session')
-    session_row = sbvdf.ix[session]
+    session_row = sbvdf.loc[session]
     guess_vvsb_start = session_row['guess_vvsb_start']
     vfilename = session_row['filename_video']
     
