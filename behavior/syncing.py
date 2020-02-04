@@ -583,7 +583,11 @@ def sync_video_with_behavior(trial_matrix, lums=None,
         if not return_all_data:
             returns b2v_fit
         if return_all_data:
-            returns dict with b2v_fit, lums, v_onsets, backlight_times
+            returns dict with b2v_fit, lums, behavior_flash_y, video_flash_x, 
+            flash_durations
+            
+            flash_duration_frames will be in frames, whereas video_flash_x
+            will be in seconds in the `assumed_fps` timebase
     """    
     # Error check because the function call has changed
     if not hasattr(trial_matrix, 'columns'):
@@ -615,7 +619,7 @@ def sync_video_with_behavior(trial_matrix, lums=None,
         durations = durations[keep_mask]        
 
     # Convert to seconds in the spurious timebase
-    v_onsets = old_div(onsets, assumed_fps)
+    v_onsets = onsets / float(assumed_fps)
 
     # Find the time of backlight pulse
     backlight_times = get_light_times_from_behavior_file(trial_matrix)
@@ -650,6 +654,7 @@ def sync_video_with_behavior(trial_matrix, lums=None,
         # Add in lums and other data sources for clarity
         res['video_flash_x'] = v_onsets
         res['behavior_flash_y'] = backlight_times
+        res['flash_duration_frames'] = durations
         
         return res
     else:
