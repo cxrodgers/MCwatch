@@ -145,6 +145,9 @@ def get_whisker_trims_table():
     trims['dt'] = trims['dt'].apply(lambda ts: ts.tz_localize(tz))
     trims = trims.drop(['Date', 'Time'], axis=1)
     
+    # Strip the mouse name
+    trims['Mouse'] = trims['Mouse'].str.strip()
+
     return trims
 
 def structure_trims(trims):
@@ -284,7 +287,7 @@ def calculate_perf_by_training_stage(partition_params=None, drop_inactive=True,
         change_table_l.append(mchange_table)
     change_table = pandas.concat(change_table_l).ix[session_table.index]
     session_table['partition'] = pandas.concat(partition_l)
-
+    
     return session_table, change_table
 
 
