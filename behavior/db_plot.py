@@ -1,4 +1,10 @@
 """Module for plotting diagnostics from db"""
+from __future__ import print_function
+from __future__ import division
+from builtins import str
+from builtins import zip
+from builtins import range
+from past.utils import old_div
 
 import numpy as np
 import pandas
@@ -134,7 +140,7 @@ def plot_by_training_stage_one_mouse(msessions, mchanges, ax=None,
         start_idx = beyond_start_date.ix[beyond_start_date.values].index[0]
     except IndexError:
         # nothing to plot
-        print "no data to plot"
+        print("no data to plot")
         ax.set_xticks([])
         ax.set_yticks([])
         return ax
@@ -212,8 +218,8 @@ def plot_logfile_check(logfile, state_names='original'):
         G.add_node(arg0)
 
     # Edges, weighted by transition prob
-    for arg1, arg1_col in check_res['norm_stm'].iteritems():
-        for arg0, val in arg1_col.iteritems():
+    for arg1, arg1_col in check_res['norm_stm'].items():
+        for arg0, val in arg1_col.items():
             if not np.isnan(val):
                 G.add_edge(arg0, arg1, weight=val)
 
@@ -496,7 +502,7 @@ def display_perf_by_servo_from_day(date=None):
         raise ValueError("too many dates")
     
     # Display each
-    f, axa = plt.subplots(2, my.rint(np.ceil(len(display_dates) / 2.0)),
+    f, axa = plt.subplots(2, my.rint(np.ceil(old_div(len(display_dates), 2.0))),
         figsize=(15, 5))
     for nax, (idx, row) in enumerate(display_dates.iterrows()):
         ax = axa.flatten()[nax]
@@ -538,7 +544,7 @@ def display_perf_by_servo(session=None, tm=None, ax=None, mean_meth='lr_pool'):
         rec_l.append({'rewside': rwsd, 'servo_pos': sp, 
             'nhits': nhits, 'ntots': ntots})
     resdf = pandas.DataFrame.from_records(rec_l)
-    resdf['perf'] = resdf['nhits'] / resdf['ntots']
+    resdf['perf'] = old_div(resdf['nhits'], resdf['ntots'])
 
     if mean_meth == 'lr_average':
         # mean left and right performances
@@ -546,7 +552,7 @@ def display_perf_by_servo(session=None, tm=None, ax=None, mean_meth='lr_pool'):
     elif mean_meth == 'lr_pool':
         # combine L and R trials
         lr_combo = resdf.groupby('servo_pos').sum()
-        meanperf = lr_combo['nhits'] / lr_combo['ntots']
+        meanperf = old_div(lr_combo['nhits'], lr_combo['ntots'])
     else:
         raise ValueError(str(mean_meth))
     
@@ -676,7 +682,7 @@ def display_session_plot(session, stimulus_set=None):
         try:
             plotter.update(filename)     
         except (ArduFSM.plot.TrialTypesError, KeyError):
-            print "warning: trying different trial types"
+            print("warning: trying different trial types")
             plt.close(plotter.graphics_handles['f'])
             continue
         break

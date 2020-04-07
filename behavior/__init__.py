@@ -1,14 +1,15 @@
 """Module for analyzing behavioral data
 
 """
+from __future__ import absolute_import
 
-import db
-import syncing
-import daily_update
-import misc
-import extras
+from . import db
+from . import syncing
+from . import daily_update
+from . import misc
+from . import extras
 
 # These are plotting modules and maybe should not be imported by default
-import db_plot
-import overlays
+from . import db_plot
+from . import overlays
 

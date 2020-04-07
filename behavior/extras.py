@@ -1,6 +1,10 @@
 """Various performance metrics and plotting
 
 """
+from __future__ import print_function
+from __future__ import division
+from builtins import range
+from past.utils import old_div
 import pandas
 import my
 import numpy as np
@@ -60,7 +64,7 @@ def calculate_perf_from_trial_matrix(tm, groupby=None,
     
     # Calculate perf
     outcomedf['n'] = outcomedf['hit'] + outcomedf['error']
-    outcomedf['perf'] = outcomedf['hit'] / outcomedf['n']
+    outcomedf['perf'] = old_div(outcomedf['hit'], outcomedf['n'])
 
     # Insert CIs
     outcomedf['ci_l'] = np.nan
@@ -95,8 +99,8 @@ def calculate_perf_by_number_of_contacts(tm, bins=None):
         bins = np.asarray(bins)
     
     if np.any(tm.n_contacts > bins.max()):
-        print "warning: dropping trials with more contacts than maximum bin"
-        1/0
+        print("warning: dropping trials with more contacts than maximum bin")
+        old_div(1,0)
     
     # This counts hits and errors for every value of n_contacts
     cdf = tm.groupby(
@@ -115,12 +119,12 @@ def calculate_perf_by_number_of_contacts(tm, bins=None):
     # Reindex by all integer bins, forward filling when no data available,
     # and starting at zero if no data for 0 contats
     cumcdf = cumcdf.reindex(
-        pandas.Index(range(bins.max() + 1))).fillna(method='ffill').fillna(0)
+        pandas.Index(list(range(bins.max() + 1)))).fillna(method='ffill').fillna(0)
     
     # Then index by desired bins and diff (to undo the cumulative)
     binned_cdf = cumcdf.ix[bins].diff().fillna(cumcdf.ix[0])
     binned_cdf = binned_cdf.astype(np.int)
-    binned_cdf['perf'] = binned_cdf['hit'] / binned_cdf.sum(1)    
+    binned_cdf['perf'] = old_div(binned_cdf['hit'], binned_cdf.sum(1))    
     
     return binned_cdf
 
@@ -134,8 +138,8 @@ def histogram_number_of_contacts(n_contacts, bins=None):
         bins = np.asarray(bins)
     
     if np.any(n_contacts > bins.max()):
-        print "warning: dropping trials with more contacts than maximum bin"
-        1/0
+        print("warning: dropping trials with more contacts than maximum bin")
+        old_div(1,0)
     
     cdf = n_contacts.value_counts().sort_index()
     cumcdf = cdf.cumsum()
@@ -143,7 +147,7 @@ def histogram_number_of_contacts(n_contacts, bins=None):
     
     # and starting at zero if no data for 0 contats
     cumcdf = cumcdf.reindex(
-        pandas.Index(range(bins.max() + 1))).fillna(method='ffill').fillna(0)
+        pandas.Index(list(range(bins.max() + 1)))).fillna(method='ffill').fillna(0)
     
     # Then index by desired bins and diff (to undo the cumulative)
     binned_cdf = cumcdf.ix[bins].diff().fillna(cumcdf.ix[0])
@@ -187,9 +191,9 @@ def calculate_perf_by_radius_distance_and_side(tm, outcome_column='outcome'):
             swaplevel(0, -1, axis=1).sort_index(axis=1)
     outcomedf[outcomedf.isnull()] = 0
     if 'error' not in outcomedf:
-        perfdf =  outcomedf['hit'] / outcomedf['hit']
+        perfdf =  old_div(outcomedf['hit'], outcomedf['hit'])
     else:
-        perfdf = outcomedf['hit'] / (outcomedf['hit'] + outcomedf['error'])    
+        perfdf = old_div(outcomedf['hit'], (outcomedf['hit'] + outcomedf['error']))    
     return perfdf
 
 def calculate_perf_by_distance_with_cis(tm):
@@ -212,8 +216,8 @@ def calculate_perf_by_distance_with_cis(tm):
             outcomedf.loc[idx, 'hit'] + outcomedf.loc[idx, 'error'])
         outcomedf.loc[idx, 'ci_l'] = ci_l
         outcomedf.loc[idx, 'ci_h'] = ci_h
-        outcomedf.loc[idx, 'perf'] = outcomedf.loc[idx, 'hit'] / \
-            (outcomedf.loc[idx, 'hit'] + outcomedf.loc[idx, 'error'])
+        outcomedf.loc[idx, 'perf'] = old_div(outcomedf.loc[idx, 'hit'], \
+            (outcomedf.loc[idx, 'hit'] + outcomedf.loc[idx, 'error']))
     
     return outcomedf
     

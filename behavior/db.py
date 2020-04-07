@@ -1,6 +1,13 @@
 """Maintaining the database of behavioral data
 
 """
+from __future__ import print_function
+from __future__ import division
+from future import standard_library
+standard_library.install_aliases()
+from builtins import input
+from builtins import range
+from past.utils import old_div
 import os
 import datetime
 import numpy as np
@@ -27,7 +34,7 @@ import sqlalchemy
 
 # for get_whisker_trims_table
 import requests
-from StringIO import StringIO
+from io import StringIO
 import pytz
 
 def get_django_database_path():
@@ -127,7 +134,7 @@ def get_whisker_trims_table():
     url = ('https://docs.google.com/spreadsheets/d/'
         '1Dvqw36R2fYTo7iWdTHOf27HONbI78nOcHaqvSEk5Bes/export?format=csv&gid=0')
     r = requests.get(url)
-    trims = pandas.read_csv(StringIO(r.content), 
+    trims = pandas.read_csv(StringIO(r.content.decode('utf-8')), 
         parse_dates=['Date', 'Time (def 11pm)'],
         ).rename(
         columns={'Time (def 11pm)' : 'Time'})
@@ -587,11 +594,11 @@ def interactive_bv_sync():
     choices = sbvdf[['session', 'dt_start', 'best_video_overlap', 'rig', 'fit1']]
     choices = choices.rename(columns={'best_video_overlap': 'vid_overlap'})
 
-    print "Here are the most recent sessions:"
-    print choices[-20:]
+    print("Here are the most recent sessions:")
+    print(choices[-20:])
     choice = None
     while choice is None:
-        choice = raw_input('Which index to analyze? ')
+        choice = input('Which index to analyze? ')
         try:
             choice = int(choice)
         except ValueError:
@@ -605,7 +612,7 @@ def interactive_bv_sync():
     # Get results
     n_results = []
     for n in range(N_pts):
-        res = raw_input('Enter result: ')
+        res = input('Enter result: ')
         n_results.append(float(res))
 
     # Run sync again
@@ -613,13 +620,13 @@ def interactive_bv_sync():
         user_results=n_results)
 
     # Store
-    res = raw_input('Confirm insertion [y/N]? ')
+    res = input('Confirm insertion [y/N]? ')
     if res == 'y':
         set_manual_bv_sync(test_row['session'], 
             sync_res1['combined_fit'])
-        print "inserted"
+        print("inserted")
     else:
-        print "not inserting"    
+        print("not inserting")    
 
 
 
@@ -687,7 +694,7 @@ def check_logfile(logfile, state_names='original'):
 
     # Extract state change times
     st_chg = ArduFSM.TrialSpeak.get_commands_from_parsed_lines(rdf, 'ST_CHG2')
-    st_chg['time'] = st_chg['time'] / 1000.
+    st_chg['time'] = old_div(st_chg['time'], 1000.)
 
     # Get duration that it was in the state in 'arg0' column
     st_chg['duration'] = st_chg['time'].diff()
@@ -782,14 +789,14 @@ def calculate_pivoted_performances(start_date=None, delta_days=15,
     # We want to keep the last of the day (??) so take_first
     dup_idxs = pmdf[['date_s', 'mouse']].duplicated(take_last=False)
     if dup_idxs.sum() > 0:
-        print "warning: dropping %d duplicated sessions" % dup_idxs.sum()
-        print "\n".join(pmdf['session'][dup_idxs].values)
+        print("warning: dropping %d duplicated sessions" % dup_idxs.sum())
+        print("\n".join(pmdf['session'][dup_idxs].values))
         pmdf = pmdf.drop(pmdf.index[dup_idxs])
 
     if drop_perfect:
         mask = (pmdf.perf_all == 1.0) | (pmdf.perf_unforced == 1.0)
         if np.sum(mask) > 0:
-            print "warning: dropping %d perfect sessions" % np.sum(mask)
+            print("warning: dropping %d perfect sessions" % np.sum(mask))
             pmdf = pmdf[~mask]
 
     # pivot on all metrics
@@ -802,8 +809,8 @@ def calculate_pivoted_performances(start_date=None, delta_days=15,
     for idx, row in missing_data.iterrows():
         missing_rows.append(row['date_s'] + ' ' + row['mouse'])
     if len(missing_rows) > 0 and display_missing:
-        print "warning: missing the following sessions:"
-        print "\n".join(missing_rows)
+        print("warning: missing the following sessions:")
+        print("\n".join(missing_rows))
     
     return piv
 
@@ -859,15 +866,15 @@ def calculate_perf_metrics(trial_matrix):
     # Trials and spoiled fraction
     rec['n_trials'] = len(trial_matrix)
     try:
-        rec['spoil_frac'] = float(np.sum(trial_matrix.outcome == 'spoil')) / \
-            len(trial_matrix)
+        rec['spoil_frac'] = old_div(float(np.sum(trial_matrix.outcome == 'spoil')), \
+            len(trial_matrix))
     except ZeroDivisionError:
         rec['spoil_frac'] = np.nan
 
     # Calculate performance
     try:
-        rec['perf_all'] = float(len(my.pick(trial_matrix, outcome='hit'))) / \
-            len(my.pick(trial_matrix, outcome=['hit', 'error']))
+        rec['perf_all'] = old_div(float(len(my.pick(trial_matrix, outcome='hit'))), \
+            len(my.pick(trial_matrix, outcome=['hit', 'error'])))
     except ZeroDivisionError:
         rec['perf_all'] = np.nan
     
@@ -877,9 +884,9 @@ def calculate_perf_metrics(trial_matrix):
     if n_nonbad_nonspoiled_trials < 10:
         rec['perf_unforced'] = np.nan
     else:
-        rec['perf_unforced'] = float(
-            len(my.pick(trial_matrix, outcome='hit', isrnd=True))) / \
-            n_nonbad_nonspoiled_trials
+        rec['perf_unforced'] = old_div(float(
+            len(my.pick(trial_matrix, outcome='hit', isrnd=True))), \
+            n_nonbad_nonspoiled_trials)
 
     # Anova with and without remove bad
     for remove_bad in [True, False]:
@@ -916,7 +923,7 @@ def calculate_perf_by_rewside_and_servo_pos(trial_matrix):
         rec_l.append({'rewside': rwsd, 'servo_pos': sp, 
             'nhits': nhits, 'ntots': ntots})
     resdf = pandas.DataFrame.from_records(rec_l)
-    resdf['perf'] = resdf['nhits'] / resdf['ntots']
+    resdf['perf'] = old_div(resdf['nhits'], resdf['ntots'])
     return resdf
 
 def search_for_sandboxes(sandbox_root_dir=None):
@@ -944,7 +951,7 @@ def search_for_sandboxes(sandbox_root_dir=None):
 
     # Warn if no results
     if len(saved_directories) == 0:
-        print "warning: no saved directories in %s" % sandbox_root_dir
+        print("warning: no saved directories in %s" % sandbox_root_dir)
     
     # Clean each
     rec_l = []
@@ -991,13 +998,13 @@ def search_for_behavior_and_video_files(
     video_dir = os.path.expanduser(video_dir)
 
     # Search for behavior files
-    1/0 # this needs to be updated
+    old_div(1,0) # this needs to be updated
     behavior_files_df = search_for_behavior_files(behavior_dir)
 
     # Acquire all video files
     video_files = glob.glob(os.path.join(video_dir, '*.mp4'))
     if len(video_files) == 0:
-        print "warning: no video files found"
+        print("warning: no video files found")
     video_files_df = parse_video_filenames(video_files, verbose=True,
         cached_video_files_df=cached_video_files_df)
 
@@ -1081,7 +1088,7 @@ def find_best_overlap_video(behavior_files_df, video_files_df,
         vidx_max_overlap = overlap.argmax()
         
         # Convert from numpy timedelta64 to a normal number
-        max_overlap_sec = overlap.ix[vidx_max_overlap] / np.timedelta64(1, 's')
+        max_overlap_sec = old_div(overlap.ix[vidx_max_overlap], np.timedelta64(1, 's'))
         
         # Store if it's more than zero
         if max_overlap_sec > 0:
@@ -1204,11 +1211,11 @@ def parse_sandboxes(sandboxes, clean=True):
         
         # Skip if non-unique
         if len(ardulines_files) == 0:
-            print "warning: no ardulines in %s" % sandbox_dir
+            print("warning: no ardulines in %s" % sandbox_dir)
             continue
         
         if len(ardulines_files) > 1:
-            print "warning: multiple ardulines in %s" % sandbox_dir
+            print("warning: multiple ardulines in %s" % sandbox_dir)
             continue
         
         # Get ardulines filename
@@ -1240,7 +1247,7 @@ def parse_sandboxes(sandboxes, clean=True):
                 try:
                     params = json.load(fi)
                 except IOError:
-                    print "warning: skipping bad json file: %s" % json_file
+                    print("warning: skipping bad json file: %s" % json_file)
                     continue
             stimulus_set = params.get('stimulus_set', '')
             
@@ -1262,8 +1269,8 @@ def parse_sandboxes(sandboxes, clean=True):
             elif 'LickTrain.py' in script_files:
                 protocol = 'LickTrain'
             else:
-                print "warning: skipping unrecognized protocol in %s" % (
-                    ardulines_filename)
+                print("warning: skipping unrecognized protocol in %s" % (
+                    ardulines_filename))
                 continue
             
             # Store
@@ -1297,7 +1304,7 @@ def parse_sandboxes(sandboxes, clean=True):
 
     # Sort and reindex
     behavior_files_df = behavior_files_df.sort_values(by='dt_start')
-    behavior_files_df.index = range(len(behavior_files_df))
+    behavior_files_df.index = list(range(len(behavior_files_df)))
     
     return behavior_files_df
 
@@ -1329,7 +1336,7 @@ def parse_video_filenames(video_filenames, verbose=False,
             continue
         
         if verbose:
-            print video_filename
+            print(video_filename)
         
         # Match filename pattern
         m = re.match(pattern, os.path.abspath(video_filename))
@@ -1354,7 +1361,7 @@ def parse_video_filenames(video_filenames, verbose=False,
                     'dt_end': video_end_time,
                     })            
                 if verbose:
-                    print "Invalid data found by ffprobe in %s" % video_filename
+                    print("Invalid data found by ffprobe in %s" % video_filename)
                 continue
 
             # Parse out start time
@@ -1379,7 +1386,7 @@ def parse_video_filenames(video_filenames, verbose=False,
             except ValueError:
                 # eg, corrupted file
                 if verbose:
-                    print "cannot get duration, corrupted?: %s" % video_filename
+                    print("cannot get duration, corrupted?: %s" % video_filename)
                 continue
                 
             video_end_time = video_start_time + video_duration
@@ -1406,7 +1413,7 @@ def parse_video_filenames(video_filenames, verbose=False,
     
     # Sort and reindex
     resdf = resdf.sort_values(by='dt_start')
-    resdf.index = range(len(resdf))    
+    resdf.index = list(range(len(resdf)))    
     
     return resdf
 
