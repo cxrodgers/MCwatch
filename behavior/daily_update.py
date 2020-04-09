@@ -88,6 +88,8 @@ def daily_update_behavior(force_reparse=False):
         
         else:
             # Error check: there should be no duplicated sessions
+            # This can happen if multiple sandboxes have the same session
+            # name for some reason.
             if new_bdf['session'].duplicated().any():
                 dup_mask = new_bdf['session'].duplicated()
                 dup_sessions = new_bdf.loc[dup_mask, 'session'].values
@@ -212,7 +214,7 @@ def daily_update_trial_matrix(start_date=None, verbose=False):
         # Make it
         try:
             trial_matrix = TrialMatrix.make_trial_matrix_from_file(row['filename'])
-        except IOError:
+        except (IOError, AssertionError):
             print(
                 "warning: cannot read lines to make trial matrix from {}".format(
                 row['filename']))
