@@ -167,7 +167,7 @@ def calculate_perf_by_radius_distance_and_side(tm, outcome_column='outcome'):
     Includes only random hits and errors.
     
     Returns: perfdf
-        index: radius
+        index: radius, side
         columns: servo_pos
         values: performance
     """
@@ -182,18 +182,17 @@ def calculate_perf_by_radius_distance_and_side(tm, outcome_column='outcome'):
         tm[outcome_column].isin(['hit', 'error']) & 
         tm.isrnd]
 
-    # Group
-    outcomedf = tm.groupby(outcome_column).apply(
-        lambda df: df.pivot_table(
-            index=['radius', 'servo_pos'], columns='rewside',
-            values='trial', aggfunc='count')).\
-            unstack(outcome_column).\
-            swaplevel(0, -1, axis=1).sort_index(axis=1)
-    outcomedf[outcomedf.isnull()] = 0
+    # Count outcomes
+    outcomedf = tm.groupby(
+        ['radius', 'rewside', 'servo_pos'])[outcome_column].value_counts().unstack(
+        ['outcome', 'servo_pos']).sort_index(axis=1)
+    
+    # Divide hits by totals
     if 'error' not in outcomedf:
-        perfdf =  old_div(outcomedf['hit'], outcomedf['hit'])
+        perfdf = outcomedf['hit'] / outcomedf['hit']
     else:
-        perfdf = old_div(outcomedf['hit'], (outcomedf['hit'] + outcomedf['error']))    
+        perfdf = outcomedf['hit'] / (outcomedf['hit'] + outcomedf['error'])
+        
     return perfdf
 
 def calculate_perf_by_distance_with_cis(tm):
