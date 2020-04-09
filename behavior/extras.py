@@ -122,7 +122,7 @@ def calculate_perf_by_number_of_contacts(tm, bins=None):
         pandas.Index(list(range(bins.max() + 1)))).fillna(method='ffill').fillna(0)
     
     # Then index by desired bins and diff (to undo the cumulative)
-    binned_cdf = cumcdf.ix[bins].diff().fillna(cumcdf.ix[0])
+    binned_cdf = cumcdf.loc[bins].diff().fillna(cumcdf.loc[0])
     binned_cdf = binned_cdf.astype(np.int)
     binned_cdf['perf'] = old_div(binned_cdf['hit'], binned_cdf.sum(1))    
     
@@ -150,7 +150,7 @@ def histogram_number_of_contacts(n_contacts, bins=None):
         pandas.Index(list(range(bins.max() + 1)))).fillna(method='ffill').fillna(0)
     
     # Then index by desired bins and diff (to undo the cumulative)
-    binned_cdf = cumcdf.ix[bins].diff().fillna(cumcdf.ix[0])
+    binned_cdf = cumcdf.loc[bins].diff().fillna(cumcdf.loc[0])
     binned_cdf = binned_cdf.astype(np.int)
     return binned_cdf
     

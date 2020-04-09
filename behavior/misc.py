@@ -81,7 +81,7 @@ def get_included_trials(trial_times, data_range, t_start=0, t_stop=0):
     video_range_bbase = extras.get_video_range_bbase(vs)
     included_trials = extras.get_included_trials(tm['rwin_time'], 
         data_range=video_range_bbase, t_start=-2, t_stop=0)
-    tm = tm.ix[included_trials]
+    tm = tm.loc[included_trials]
     """
     return trial_times[
         (trial_times + t_start >= data_range[0]) &

@@ -88,6 +88,8 @@ def daily_update_behavior(force_reparse=False):
         
         else:
             # Error check: there should be no duplicated sessions
+            # This can happen if multiple sandboxes have the same session
+            # name for some reason.
             if new_bdf['session'].duplicated().any():
                 dup_mask = new_bdf['session'].duplicated()
                 dup_sessions = new_bdf.loc[dup_mask, 'session'].values
@@ -210,7 +212,14 @@ def daily_update_trial_matrix(start_date=None, verbose=False):
             print(filename)
 
         # Make it
-        trial_matrix = TrialMatrix.make_trial_matrix_from_file(row['filename'])
+        try:
+            trial_matrix = TrialMatrix.make_trial_matrix_from_file(row['filename'])
+        except (IOError, AssertionError):
+            print(
+                "warning: cannot read lines to make trial matrix from {}".format(
+                row['filename']))
+            # E.g. if the files got deleted or something
+            continue
         
         # And store it
         trial_matrix.to_csv(filename)
@@ -254,7 +263,13 @@ def daily_update_perf_metrics(start_date=None, verbose=False):
             continue
         
         # Otherwise run
-        trial_matrix = MCwatch.behavior.db.get_trial_matrix(session)
+        try:
+            trial_matrix = MCwatch.behavior.db.get_trial_matrix(session)
+        except IOError:
+            # E.g. if the files were deleted
+            print("warning: cannot load trial matrix for {}".format(session))
+            continue
+            
         if len(trial_matrix) == 0:
             if verbose:
                 print("skipping session with no rows: %s" % session)
