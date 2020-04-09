@@ -17,7 +17,7 @@ import MCwatch
 
 def mean_frames_by_choice(trials_info, trialnum2frame):
     # Keep only those trials that we found images for
-    trials_info = trials_info.ix[sorted(trialnum2frame.keys())]
+    trials_info = trials_info.loc[sorted(trialnum2frame.keys())]
 
     # Dump those with a spoiled trial
     trials_info = my.misc.pick_rows(trials_info, choice=[0, 1], bad=False)
@@ -137,7 +137,7 @@ def make_overlays_from_fits_for_day(overwrite_frames=False, savefig=True,
         date = sbvdf_dates.max()
     
     # Choose the ones to process
-    display_dates = sbvdf.ix[sbvdf_dates == date]
+    display_dates = sbvdf.loc[sbvdf_dates == date]
 
     # Join all the dataframes we need
     jdf = display_dates.join(msdf, on='session', how='inner')
@@ -207,7 +207,7 @@ def make_overlays_from_fits(session, overwrite_frames=False, savefig=True,
 
     # Keep only those trials that we found images for
     trial_matrix = MCwatch.behavior.db.get_trial_matrix(session)
-    trial_matrix = trial_matrix.ix[sorted(trial_number2frame.keys())]
+    trial_matrix = trial_matrix.loc[sorted(trial_number2frame.keys())]
 
     # Split on side, servo_pos, stim_number
     res = []
@@ -257,7 +257,7 @@ def extract_frames_at_retraction_times(behavior_filename, video_filename,
     
     # Mask out any frametimes that are before or after the video
     video_duration = my.video.get_video_duration2(video_filename)
-    state_change_times_vbase.ix[
+    state_change_times_vbase.loc[
         (state_change_times_vbase < 1) |
         (state_change_times_vbase > video_duration - 1)
         ] = np.nan
@@ -289,7 +289,7 @@ def calculate_sess_meaned_frames(trial_number2frame, trial_matrix):
         meaned
     """
     # Ensure we only count frames that we have data for
-    trial_matrix = trial_matrix.ix[sorted(trial_number2frame.keys())]    
+    trial_matrix = trial_matrix.loc[sorted(trial_number2frame.keys())]    
     
     # Split on side, servo_pos, stim_number
     res = []

@@ -66,7 +66,7 @@ def plot_by_training_stage(mouse_names=None):
         except KeyError:
             # in training, but no data
             continue
-        mchanges = change_table.ix[msessions.index]
+        mchanges = change_table.loc[msessions.index]
         
         if f is None or axnum == n_mouse_per_figure:
             f, axa = plt.subplots(n_mouse_per_figure, 1,
@@ -118,7 +118,7 @@ def plot_by_training_stage_one_mouse(msessions, mchanges, ax=None,
     
     if mouse is not None:
         msessions = msessions[msessions.mouse == mouse]
-        mchanges = mchanges.ix[msessions.index]
+        mchanges = mchanges.loc[msessions.index]
     
     # Choose start date
     tz = pytz.timezone('America/New_York')
@@ -137,7 +137,7 @@ def plot_by_training_stage_one_mouse(msessions, mchanges, ax=None,
         lambda dt: dt.strftime('%m-%d'))
     beyond_start_date = msessions2['date_time_start'] >= start_date
     try:
-        start_idx = beyond_start_date.ix[beyond_start_date.values].index[0]
+        start_idx = beyond_start_date.loc[beyond_start_date.values].index[0]
     except IndexError:
         # nothing to plot
         print("no data to plot")
@@ -148,7 +148,7 @@ def plot_by_training_stage_one_mouse(msessions, mchanges, ax=None,
     # plot each partition
     for partnum, psessions in gobj:
         # Get corresponding df from mchanges
-        pchanges = mchanges2.ix[psessions.index]
+        pchanges = mchanges2.loc[psessions.index]
         
         # Color by scheduler
         if (psessions['scheduler'] == 'Auto').all():
@@ -356,14 +356,14 @@ def plot_pivoted_performances(start_date=None, delta_days=15, piv=None,
             for nmouse, mouse in enumerate(mice):
                 if by_day_of_training:
                     # We just drop all the nulls wherever they occur
-                    ax.plot(pm.ix[mouse].dropna().values,
+                    ax.plot(pm.loc[mouse].dropna().values,
                         color=colors[nmouse], ls='-', marker=marker, mec='none',
                         mfc=colors[nmouse])
                 else:
-                    null_mask = pm.ix[mouse].isnull().values
+                    null_mask = pm.loc[mouse].isnull().values
                     ax.plot(
                         xlabels_num[~null_mask], 
-                        pm.ix[mouse].values[~null_mask], 
+                        pm.loc[mouse].values[~null_mask], 
                         color=colors[nmouse],
                         ls='-', marker=marker, mec='none', mfc=colors[nmouse])
 
@@ -378,7 +378,7 @@ def plot_pivoted_performances(start_date=None, delta_days=15, piv=None,
             if not by_day_of_training:
                 if ax is axa[-1, 0]:
                     for nmouse, mouse in enumerate(mice):
-                        null_dates = piv['n_trials'].isnull().ix[mouse].values
+                        null_dates = piv['n_trials'].isnull().loc[mouse].values
                         pm_copy = np.ones_like(null_dates) * \
                             (nmouse + 0.5) / float(len(mice))
                         pm_copy[~null_dates] = np.nan
@@ -421,7 +421,7 @@ def display_session_plots_from_day(date=None):
         date = bdf_dates.max()
     
     # Choose the ones to display
-    display_dates = bdf.ix[bdf_dates == date]
+    display_dates = bdf.loc[bdf_dates == date]
     if len(display_dates) > 20:
         raise ValueError("too many dates")
     
@@ -450,7 +450,7 @@ def display_overlays_by_rig_from_day(date=None, rigs=('B1', 'B2', 'B3', 'B4'),
         date = sbvdf_dates.max()
     
     # Choose the ones to display
-    display_dates = sbvdf.ix[sbvdf_dates == date]
+    display_dates = sbvdf.loc[sbvdf_dates == date]
 
     # Select by rigs and sort by rig and date
     display_dates = my.pick_rows(display_dates, rig=rigs).sort(
@@ -497,7 +497,7 @@ def display_perf_by_servo_from_day(date=None):
         date = bdf_dates.max()
     
     # Choose the ones to display
-    display_dates = bdf.ix[bdf_dates == date]
+    display_dates = bdf.loc[bdf_dates == date]
     if len(display_dates) > 20:
         raise ValueError("too many dates")
     

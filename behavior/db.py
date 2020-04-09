@@ -292,7 +292,7 @@ def calculate_perf_by_training_stage(partition_params=None, drop_inactive=True,
         mchange_table = msessions[partition_params].apply(shift_test)
         partition_l.append(mchange_table.any(axis=1).cumsum() - 1)
         change_table_l.append(mchange_table)
-    change_table = pandas.concat(change_table_l).ix[session_table.index]
+    change_table = pandas.concat(change_table_l).loc[session_table.index]
     session_table['partition'] = pandas.concat(partition_l)
     
     return session_table, change_table
@@ -603,7 +603,7 @@ def interactive_bv_sync():
             choice = int(choice)
         except ValueError:
             pass
-    test_row = sbvdf.ix[choice]
+    test_row = sbvdf.loc[choice]
 
     # Run sync
     N_pts = 3
@@ -770,10 +770,10 @@ def calculate_pivoted_performances(start_date=None, delta_days=15,
 
     # Filter by stop date
     if stop_date is not None:
-        pmdf = pmdf.ix[pmdf.dt_start <= stop_date]
+        pmdf = pmdf.loc[pmdf.dt_start <= stop_date]
     
     # Filter by start date and drop the start date column
-    pmdf = pmdf.ix[pmdf.dt_start >= start_date].drop('dt_start', 1)
+    pmdf = pmdf.loc[pmdf.dt_start >= start_date].drop('dt_start', 1)
     #pmdf.index = range(len(pmdf))
 
     # always sort on session
@@ -804,7 +804,7 @@ def calculate_pivoted_performances(start_date=None, delta_days=15,
 
     # Find missing data
     missing_data = piv['n_trials'].isnull().unstack()
-    missing_data = missing_data.ix[missing_data].reset_index()
+    missing_data = missing_data.loc[missing_data].reset_index()
     missing_rows = []
     for idx, row in missing_data.iterrows():
         missing_rows.append(row['date_s'] + ' ' + row['mouse'])
@@ -895,7 +895,7 @@ def calculate_perf_metrics(trial_matrix):
             trial_matrix)
         if remove_bad:
             suffix = '_unforced'
-            numericated_trial_matrix = numericated_trial_matrix.ix[
+            numericated_trial_matrix = numericated_trial_matrix.loc[
                 numericated_trial_matrix.isrnd == True]
         else:
             suffix = '_all'
@@ -1075,7 +1075,7 @@ def find_best_overlap_video(behavior_files_df, video_files_df,
         # Prefer any MKV over any MP4 files
         if always_prefer_mkv:
             # Find out if any positive overlaps are from mkv
-            file_extensions = video_files_df.ix[
+            file_extensions = video_files_df.loc[
                 positive_overlaps.index]['filename'].apply(
                 lambda s: os.path.splitext(s)[1])
             
@@ -1088,7 +1088,7 @@ def find_best_overlap_video(behavior_files_df, video_files_df,
         vidx_max_overlap = overlap.argmax()
         
         # Convert from numpy timedelta64 to a normal number
-        max_overlap_sec = old_div(overlap.ix[vidx_max_overlap], np.timedelta64(1, 's'))
+        max_overlap_sec = old_div(overlap.loc[vidx_max_overlap], np.timedelta64(1, 's'))
         
         # Store if it's more than zero
         if max_overlap_sec > 0:
