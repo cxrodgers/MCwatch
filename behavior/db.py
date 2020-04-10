@@ -1204,7 +1204,11 @@ def parse_sandboxes(sandboxes, clean=True):
     
     
     rec_l = []
-    for idx, (sandbox_dir, sandbox_name) in sandboxes.iterrows():
+    for idx in sandboxes.index:
+        # Get data about this sandbox
+        sandbox_dir = sandboxes.loc[idx, 'sandbox_dir']
+        sandbox_name = sandboxes.loc[idx, 'sandbox_name']
+        
         # Determine if it contains exactly one ardulines file
         ardulines_files = glob.glob(os.path.join(sandbox_dir,
             'Script', 'logfiles', 'ardulines.*'))
@@ -1243,7 +1247,7 @@ def parse_sandboxes(sandboxes, clean=True):
             # Get the stimulus set
             json_file = os.path.normpath(
                 os.path.join(ardulines_filename, '../../parameters.json'))
-            with file(json_file) as fi:
+            with open(json_file) as fi:
                 try:
                     params = json.load(fi)
                 except IOError:
