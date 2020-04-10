@@ -214,7 +214,7 @@ def daily_update_trial_matrix(start_date=None, verbose=False):
         # Make it
         try:
             trial_matrix = TrialMatrix.make_trial_matrix_from_file(row['filename'])
-        except (IOError, AssertionError):
+        except (IOError, AssertionError, ValueError):
             print(
                 "warning: cannot read lines to make trial matrix from {}".format(
                 row['filename']))
