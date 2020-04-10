@@ -307,10 +307,10 @@ def get_paths():
     LOCALE = get_locale()
     if LOCALE == 'gamma':
         PATHS = {
-            'database_root': '/mnt/behavior/behavior_db',
-            'presandbox_behavior_dir': '/mnt/behavior/runmice',
-            'behavior_dir': '/mnt/behavior/sandbox_root',
-            'video_dir': '/mnt/behavior/ps3eye/marvin/compressed_eye',
+            'database_root': '/home/jack/mnt/behavior/behavior_db',
+            'presandbox_behavior_dir': '/home/jack/mnt/behavior/runmice',
+            'behavior_dir': '/home/jack/mnt/behavior/sandbox_root',
+            'video_dir': '/home/jack/mnt/behavior/ps3eye/marvin/compressed_eye',
             }
 
     elif LOCALE == 'marvin':
