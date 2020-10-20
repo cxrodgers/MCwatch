@@ -61,6 +61,9 @@ def get_django_session_table():
     
     datetimes are returned in NewYork
     
+    Sorts by the index (session name), which will not be sorted by 
+    date_time_start in general.
+    
     Returns: DataFrame, with these columns
         mouse, stimulus_set, scheduler, date_time_start
     """
@@ -108,6 +111,9 @@ def get_django_session_table():
     tz = pytz.timezone('America/New_York')
     session_table['date_time_start'] = session_table['date_time_start'].apply(
         lambda ts: ts.tz_convert(tz))
+    
+    # Sort by index
+    session_table = session_table.sort_index()
     
     return session_table
 
