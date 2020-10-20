@@ -609,7 +609,10 @@ def display_perf_by_rig(piv=None, drop_mice=None,
                 ax.set_ylabel(rig)
 
             # Get the metric
-            topl = piv.loc[rig, metric]
+            try:
+                topl = piv.loc[rig, metric]
+            except KeyError:
+                continue
             
             # Labels on x-axis are the dates
             xlabels = topl.index.values
