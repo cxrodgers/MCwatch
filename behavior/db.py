@@ -163,11 +163,9 @@ def get_whisker_trims_table():
 
     return trims
 
-def structure_trims(trims):
-    """Return whisker trims in a more structured format
+def _structure_trims(which_spared):
+    """Helper function that structures trims in a Series"""
     
-    trims : Results of get_whisker_trims_table()
-    """
     def convert_trim_string_to_list(s):
         """Convert trim string to dict of whisker name to True/False"""
         split_s = [ss.strip() for ss in s.split(';')]
@@ -180,6 +178,10 @@ def structure_trims(trims):
         
         if 'None' in split_s:
             return res
+
+        if 'All' in split_s:
+            for whisker in ['C1', 'C2', 'C3', 'C4']:
+                res[whisker] = True
 
         if 'C*' in split_s:
             for whisker in ['C1', 'C2', 'C3', 'C4']:
@@ -200,8 +202,23 @@ def structure_trims(trims):
         return res
 
     # Apply the conversion
-    structured_trims = trims['Which Spared'].apply(
-        convert_trim_string_to_list)
+    structured = pandas.DataFrame.from_records(
+        which_spared.apply(convert_trim_string_to_list),
+        index=which_spared.index,
+        )
+
+    # Count
+    structured['n_whiskers'] = structured.sum(1).astype(np.int)
+    
+    return structured
+
+def structure_trims(trims):
+    """Return whisker trims in a more structured format
+    
+    trims : Results of get_whisker_trims_table()
+    """
+    # Do the structuring
+    structured_trims_df = _structure_trims(trims['Which Spared'])
 
     # take multi index from trims
     midx = pandas.MultiIndex.from_arrays(
@@ -210,17 +227,10 @@ def structure_trims(trims):
     )
 
     # dataframe it
-    structured_trims_df = pandas.DataFrame.from_records(
-        pandas.DataFrame.from_records(structured_trims.values),
-        index=midx,
-    )
-    
-    # Count
-    structured_trims_df['n_whiskers'] = structured_trims_df.sum(1).astype(
-        np.int)
+    structured_trims_df.index = midx
     
     # Sort
-    structured_trims = structured_trims.sort_index()
+    structured_trims_df = structured_trims_df.sort_index()
     
     return structured_trims_df
 
