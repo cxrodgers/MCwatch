@@ -48,6 +48,12 @@ def get_django_database_path():
     database_uri = os.environ.get('DATABASE_URL')
     if database_uri is None:
         raise ValueError("cannot get DATABASE_URL from environment")
+    
+    # Fix
+    # https://help.heroku.com/ZKNTJQSK/why-is-sqlalchemy-1-4-x-not-connecting-to-heroku-postgres
+    if database_uri.startswith('postgres://'):
+        database_uri = database_uri.replace("postgres://", "postgresql://", 1)
+    
     return database_uri
 
 def get_django_session_table():
