@@ -25,7 +25,12 @@ from __future__ import absolute_import
 
 import os
 import sys
-import django
+try:
+    import django
+    NO_DJANGO = False
+except ImportError:
+    NO_DJANGO = True
+    pass
 
 ## Load the interface with the django database
 def _setup_django():
@@ -59,7 +64,8 @@ def _setup_django():
     django.setup()
 
 try:
-    _setup_django()
+    if not NO_DJANGO:
+        _setup_django()
 except ImportError:
     # this happens if mouse-cloud doesn't exist at the expected path
     # it can also happen if a mouse-cloud requirement isn't installed

@@ -30,10 +30,16 @@ except ImportError:
     pass
 
 # for get_django_database_path
-import sqlalchemy
+try:
+    import sqlalchemy
+except ImportError:
+    pass
 
 # for get_whisker_trims_table
-import requests
+try:
+    import requests
+except ImportError:
+    pass
 from io import StringIO
 import pytz
 
