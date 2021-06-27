@@ -511,11 +511,12 @@ def get_behavior_df():
     
     # de-localeify
     behavior_files_df['filename'] = behavior_files_df['filename'].str.replace(
-        '\$behavior_dir\$', PATHS['behavior_dir'])
+        '\$behavior_dir\$', PATHS['behavior_dir'], regex=True)
 
     # de-localeify
     behavior_files_df['filename'] = behavior_files_df['filename'].str.replace(
-        '\$presandbox_behavior_dir\$', PATHS['presandbox_behavior_dir'])
+        '\$presandbox_behavior_dir\$', PATHS['presandbox_behavior_dir'], 
+        regex=True)
     
     # Alternatively, could store as floating point seconds
     behavior_files_df['duration'] = pandas.to_timedelta(
@@ -540,7 +541,7 @@ def get_video_df():
 
     # de-localeify
     video_files_df['filename'] = video_files_df['filename'].str.replace(
-        '\$video_dir\$', PATHS['video_dir'])
+        '\$video_dir\$', PATHS['video_dir'], regex=True)
     
     # Alternatively, could store as floating point seconds
     video_files_df['duration'] = pandas.to_timedelta(
@@ -567,9 +568,9 @@ def get_synced_behavior_and_video_df():
 
     # de-localeify
     synced_bv_df['filename_video'] = synced_bv_df['filename_video'].str.replace(
-        '\$video_dir\$', PATHS['video_dir'])
+        '\$video_dir\$', PATHS['video_dir'], regex=True)
     synced_bv_df['filename'] = synced_bv_df['filename'].str.replace(
-        '\$behavior_dir\$', PATHS['behavior_dir'])        
+        '\$behavior_dir\$', PATHS['behavior_dir'], regex=True)        
     
     return synced_bv_df    
 
