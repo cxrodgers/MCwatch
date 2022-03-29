@@ -383,9 +383,9 @@ def get_paths():
 
     elif LOCALE == 'cephalopod':
         PATHS = {
-            'database_root': '/home/chris/mnt/cuttlefish/behavior/behavior_db',
+            'database_root': '/home/chris/mnt/cuttlefish/chris/behavior/behavior_db',
             #~ 'presandbox_behavior_dir': '/mnt/behavior/runmice',
-            #~ 'behavior_dir': '/mnt/behavior/sandbox_root',
+            'behavior_dir': '/home/chris/mnt/cuttlefish/chris/farscape/chris/behavior/sandbox_root',
             #~ 'video_dir': '/mnt/behavior/ps3eye/texture/compressed_eye',
             }
 
