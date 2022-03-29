@@ -381,6 +381,14 @@ def get_paths():
             'video_dir': '/mnt/behavior/ps3eye/texture/compressed_eye',
             }
 
+    elif LOCALE == 'cephalopod':
+        PATHS = {
+            'database_root': '/home/chris/mnt/cuttlefish/behavior/behavior_db',
+            #~ 'presandbox_behavior_dir': '/mnt/behavior/runmice',
+            #~ 'behavior_dir': '/mnt/behavior/sandbox_root',
+            #~ 'video_dir': '/mnt/behavior/ps3eye/texture/compressed_eye',
+            }
+
     else:
         raise ValueError("unknown locale %s" % LOCALE)
     
