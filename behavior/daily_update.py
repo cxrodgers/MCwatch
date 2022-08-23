@@ -15,8 +15,8 @@ def daily_update():
     
     This should be run on marvin locale.
     """
-    if MCwatch.behavior.db.get_locale() != 'marvin':
-        raise ValueError("this must be run on marvin")
+    if MCwatch.behavior.db.get_locale() != 'texture':
+        raise ValueError("this must be run on texture")
     
     daily_update_behavior()
     #~ daily_update_video()
