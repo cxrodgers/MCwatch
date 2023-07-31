@@ -214,7 +214,7 @@ def extract_onsets_and_durations(lums, delta=30, diffsize=3, refrac=5,
 
 def drop_refrac(arr, refrac):
     """Drop all values in arr after a refrac from an earlier val"""
-    drop_mask = np.zeros_like(arr).astype(np.bool)
+    drop_mask = np.zeros_like(arr).astype(bool)
     for idx, val in enumerate(arr):
         drop_mask[(arr < val + refrac) & (arr > val)] = 1
     return arr[~drop_mask]
