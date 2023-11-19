@@ -149,8 +149,22 @@ def generate_mplayer_guesses_and_sync(metadata,
 
 ## Begin house light syncing
 def extract_onsets_and_durations(lums, delta=30, diffsize=3, refrac=5,
-    verbose=False, maximum_duration=100):
+    verbose=False, maximum_duration=100, meth=2):
     """Identify sudden, sustained increments in the signal `lums`.
+    
+    meth: int
+        if 2, use extract_duration_of_onsets2 
+            This was the default for a long time
+            This is a "greedy algorithm". 
+            It prioritizes earlier onsets / longer durations
+        if 1, use extract_duration_of_onsets
+            It prioritizes later onsets / shorter durations
+        
+        The difference occurs if we have onset1 (with no matching offset1),
+        followed by matching (onset2, offset2). The greedy algorithm will
+        prioritize the first onset, and match offset2 to onset1, so it has
+        to drop onset2. The standard algorithm will prioritize the last onset
+        before the upcoming offset (i.e., prioritize shorter duration).
     
     Algorithm
     1.  Take the diff of lums over a period of `diffsize`.
@@ -198,8 +212,13 @@ def extract_onsets_and_durations(lums, delta=30, diffsize=3, refrac=5,
     if verbose:
         print(onsets2)
     
-    # get durations
-    remaining_onsets, durations = extract_duration_of_onsets2(onsets2, offsets2)
+    # Match onsets to offsets
+    if meth == 1:
+        remaining_onsets, durations = extract_duration_of_onsets(onsets2, offsets2)
+    elif meth == 2:
+        remaining_onsets, durations = extract_duration_of_onsets2(onsets2, offsets2)
+    else:
+        raise ValueError("unexpected meth {}, should be 1 or 2".format(meth))
     if verbose:
         print(remaining_onsets)
     
@@ -214,7 +233,7 @@ def extract_onsets_and_durations(lums, delta=30, diffsize=3, refrac=5,
 
 def drop_refrac(arr, refrac):
     """Drop all values in arr after a refrac from an earlier val"""
-    drop_mask = np.zeros_like(arr).astype(np.bool)
+    drop_mask = np.zeros_like(arr).astype(bool)
     for idx, val in enumerate(arr):
         drop_mask[(arr < val + refrac) & (arr > val)] = 1
     return arr[~drop_mask]
@@ -261,7 +280,7 @@ def extract_duration_of_onsets2(onsets, offsets):
     durations = []
     
     if len(onsets) == 0:
-        return np.array([], dtype=np.int), np.array([], dtype=np.int)
+        return np.array([], dtype=int), np.array([], dtype=int)
     
     # This trigger will be set after each detected duration to mask out
     # subsequent onsets greedily
@@ -506,8 +525,8 @@ def get_95prctl_r_minus_b(frame):
     Spatially downsample by 2x in x and y to save time.
     """
     vals = (
-        frame[::2, ::2, 0].astype(np.int) - 
-        frame[::2, ::2, 2].astype(np.int)).flatten()
+        frame[::2, ::2, 0].astype(int) - 
+        frame[::2, ::2, 2].astype(int)).flatten()
     return np.sort(vals)[int(.95 * len(vals))]
 
 def get_or_save_lums(session, lumdir=None, meth='gray', verbose=True, 
