@@ -204,13 +204,19 @@ def extract_onsets_and_durations(lums, delta=30, diffsize=3, refrac=5,
     onsets = np.where(diffsig > delta)[0] + diffsize
     offsets = np.where(diffsig < -delta)[0] + diffsize
     if verbose:
+        print("initial onsets")
         print(onsets)
+        print("initial offsets")
+        print(offsets)
     
     # drop refractory onsets, offsets
     onsets2 = drop_refrac(onsets, refrac)
     offsets2 = drop_refrac(offsets, refrac)    
     if verbose:
+        print("after dropping refractory violations: onsets")
         print(onsets2)
+        print("after dropping refractory violations: offsets")
+        print(offsets2)
     
     # Match onsets to offsets
     if meth == 1:
@@ -220,13 +226,19 @@ def extract_onsets_and_durations(lums, delta=30, diffsize=3, refrac=5,
     else:
         raise ValueError("unexpected meth {}, should be 1 or 2".format(meth))
     if verbose:
-        print(remaining_onsets)
+        print("after combining onsets and offsets: onsets-offsets-durations")
+        print(np.array([remaining_onsets, remaining_onsets + durations, durations]).T)
     
     # apply maximum duration mask
     if maximum_duration is not None:
         max_dur_mask = durations <= maximum_duration
         remaining_onsets = remaining_onsets[max_dur_mask].copy()
         durations = durations[max_dur_mask].copy()
+        
+        if verbose:
+            print("after applying max duration mask: onsets-offsets-durations")
+            print(np.array([remaining_onsets, remaining_onsets + durations, durations]).T)
+
 
     return remaining_onsets, durations
     
